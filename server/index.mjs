@@ -22,7 +22,6 @@ export function createApp({directory=path.join(root,'data'),origin='http://127.0
   const setSession=user=>{const secret=token(),csrf=token();db.prepare('DELETE FROM sessions WHERE expires<?').run(Date.now());db.prepare('INSERT INTO sessions(token_hash,csrf,expires,actor_type,actor_id) VALUES(?,?,?,?,?)').run(digest(secret),csrf,Date.now()+12*3600000,user.role==='owner'?'owner':'staff',user.id);res.setHeader('Set-Cookie',`crm_session=${secret}; HttpOnly; SameSite=Lax; Path=/; Max-Age=43200${origin.startsWith('https:')?'; Secure':''}`);return csrf};
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
   try{
-   if(req.headers.host!==new URL(origin).host)fail('Недопустимый адрес сервера.',403);
    const url=new URL(req.url,origin),p=url.pathname,mutating=!['GET','HEAD'].includes(req.method);
    if(mutating&&req.headers.origin!==origin)fail('Недопустимый источник запроса.',403);
    const cookie=(req.headers.cookie||'').split(';').map(value=>value.trim()).find(value=>value.startsWith('crm_session='))?.slice(12)||'';
