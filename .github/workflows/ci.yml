@@ -18,3 +18,25 @@ jobs:
         with:
           node-version: 24
       - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      OWNER: yernarkuanysh-tech
+      IMAGE: crm
+      TAG: latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: login ghcr.io
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $ --password-stdin
+
+      - name: build image
+        run: docker build -t ghcr.io/$OWNER/$IMAGE:$TAG .
+
+      - name: push image to registry
+        run: docker push ghcr.io/$OWNER/$IMAGE:$TAG
