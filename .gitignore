@@ -1,0 +1,10 @@
+output/
+tmp/
+*.png
+.sites-runtime/
+.openai/
+data/
+.env
+.DS_Store
+*.log
+*.zip

@@ -1,0 +1,13 @@
+{
+  "name": "granted-crm",
+  "private": true,
+  "version": "0.3.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.mjs",
+    "test": "node --test tests/*.test.mjs && node tests/fees.cjs",
+    "test:pdf": "node tests/pdf.cjs"
+  }
+}

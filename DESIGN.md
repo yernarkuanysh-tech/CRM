@@ -1,0 +1,17 @@
+# GrantEd Admissions CRM
+
+Reference lock: Refero bundled typography.md (neutral single-family compact work UI), color.md (neutral surfaces and one blue action accent), craft-details.md (labeled forms, focus, navigation and empty states). Live reference research unavailable: subscription inactive.
+
+Preserve white canvas, pale neutral sidebar, 14px system UI typography, thin separators, 8px control radius, blue only for actions/selection and semantic green/amber for outcomes. No artwork required for a working data surface. User brief controls the data model: one admin, applicants, individual university applications, Drive links, tasks, Gmail preview. Table-first client overview, right-side deadlines, full detail with tabs. Avoid decorative charts and marketing content.
+
+Current product scope: server-backed CRM with SQLite, owner authentication, up to 10 employee accounts, client cards, applications, tasks, documents, reports, Google OAuth integrations and email invitations. Authentication and role restrictions are enforced by the server; browser storage is used only for optional migration from the original prototype.
+
+Settings/test results extension: existing CRM is the locked product reference. Preserve the neutral panels, compact tables and blue save actions. Refero craft-details.md supplies explicit labels, autocomplete, inline errors and disabled submit while saving. Settings use separate workspace/security/recovery sections; recovery shows a one-time code only after current-password verification. User-requested tests use a table with separate attempt rows, date and explicit score scale. No decorative assets.
+
+Brand extension: existing CRM remains the primary visual reference. Refero typography.md keeps the one-family, compact work-tool hierarchy; icons.md supplies the 32px canvas, consistent round strokes and `currentColor`-style restraint; color.md keeps blue as the sole brand/action accent. The new mark combines a `G` with a short rising path, while the lockup pairs the organization name with the small descriptor “Admissions CRM”. The mark stays code-native SVG, works at favicon size, and avoids graduation-cap imagery or a separate decorative typeface.
+
+Official logo override: the user-provided black-and-white GrantEd sign is the authoritative brand asset. Preserve its geometry and monochrome role; crop only the source whitespace. Display it on an intentional white tile in the sidebar and login lockup, keep the existing blue for product actions, and use the same asset in the favicon and report header.
+
+Vercel-inspired product theme: `Vercel.md` supplied by the user is the primary direction. Preserve its near-white canvas, ink `#171717`, white surfaces, 1px `#ebebeb` hairlines, 6–8px in-product radii, negative display tracking, mono technical labels, and stacked low-opacity shadows. Adapt the app-shell example directly: white sidebar, monochrome active indicator, compact data table, black primary actions. Keep link blue only for navigational inline links and semantic colors for statuses. Reject the marketing mesh gradient because the document assigns it to hero-scale marketing surfaces, while this CRM is a dense work tool.
+
+Team extension: the owner controls workspace settings, recovery, exports and employee access. Employees use individual passwords and share the operational client workspace. Invitations are one-time links valid for seven days; the team view uses the existing compact table language and exposes active, disabled and pending states without decorative UI.
