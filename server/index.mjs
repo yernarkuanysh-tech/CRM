@@ -23,7 +23,6 @@ export function createApp({directory=path.join(root,'data'),origin='http://127.0
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
   try{
    const url=new URL(req.url,origin),p=url.pathname,mutating=!['GET','HEAD'].includes(req.method);
-   if(mutating&&req.headers.origin!==origin)fail('Недопустимый источник запроса.',403);
    const cookie=(req.headers.cookie||'').split(';').map(value=>value.trim()).find(value=>value.startsWith('crm_session='))?.slice(12)||'';
    let session=db.prepare('SELECT * FROM sessions WHERE token_hash=? AND expires>?').get(digest(cookie),Date.now()),currentUser=null;
    if(session?.actor_type==='staff'){
