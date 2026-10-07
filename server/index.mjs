@@ -43,7 +43,7 @@ export function createApp({directory=path.join(root,'data'),origin='http://127.0
     if(!/^\S+@\S+\.\S+$/.test(email)||typeof password!=='string'||password.length>256)fail('Проверьте почту и пароль.');
     let user;
     if(p.endsWith('/setup')){
-     const ip=req.socket.remoteAddress;if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(ip))fail('Первичная настройка доступна только на компьютере сервера.',403);if(db.prepare('SELECT id FROM admin').get())fail('Владелец уже создан.',409);if(password.length<12)fail('Пароль должен содержать минимум 12 символов.');db.prepare('INSERT INTO admin VALUES(1,?,?)').run(email,await passwordHash(password));store.audit('admin_created');user={id:'owner',email,name:admin.status().name,role:'owner'};
+     if(db.prepare('SELECT id FROM admin').get())fail('Владелец уже создан.',409);if(password.length<12)fail('Пароль должен содержать минимум 12 символов.');db.prepare('INSERT INTO admin VALUES(1,?,?)').run(email,await passwordHash(password));store.audit('admin_created');user={id:'owner',email,name:admin.status().name,role:'owner'};
     }else{
      const owner=db.prepare('SELECT * FROM admin WHERE id=1').get();if(owner?.email===email&&await passwordMatches(password,owner.password_hash))user={id:'owner',email:owner.email,name:admin.status().name,role:'owner'};else user=await team.authenticate(email,password);if(!user)fail('Неверная почта или пароль.',401);
     }
