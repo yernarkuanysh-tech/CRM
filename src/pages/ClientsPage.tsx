@@ -25,7 +25,7 @@ export function ClientsPage() {
             <span className={subtle}>{`Набор ${settings.year}`}</span>
           </SectionTop>
           <ClientTable />
-          <p className={localNote}>Изменения сохраняются в базе данных. Документы открываются по вашим ссылкам Google Drive.</p>
+          <p className={localNote}>Изменения сохраняются в базе данных.</p>
         </section>
         <aside className="border-l border-line pl-24 max-xl:hidden">
           <h2 className="mt-2 mb-7">Требуют внимания</h2>
@@ -41,10 +41,6 @@ export function ClientsPage() {
             );
           })}
           <a className={quietLink} href="#tasks">Все задачи</a>
-          <div className="mt-28 rounded-[9px] border border-line bg-canvas p-16 text-ink-soft">
-            <Icon name="link" /> <strong className="ml-4 text-[12px]">Документы рядом</strong>
-            <p className="mb-0 text-[12px] leading-[1.6] text-muted">Добавьте ссылку на папку Google Drive в карточке клиента.</p>
-          </div>
         </aside>
       </div>
     </Shell>

@@ -61,7 +61,6 @@ export function SettingsPage() {
           <Section title="Данные и подключения">
             <p>Выгрузка содержит карточки, заявки, задачи и отчёты.</p>
             <a className={quietLink} href="/api/export">Скачать JSON</a>
-            <p><a href="#integrations">Управлять Google Drive и Gmail</a></p>
           </Section>
         )}
         {owner && <TeamSection />}

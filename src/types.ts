@@ -24,13 +24,6 @@ export interface Task {
   done: boolean;
 }
 
-export interface ClientDocument {
-  id: string;
-  name: string;
-  type: string;
-  url: string;
-}
-
 export interface TestResult {
   id: string;
   type: TestType;
@@ -92,7 +85,6 @@ export interface Client {
   email?: string;
   phone?: string;
   country?: string;
-  folder?: string;
   academicField?: string;
   semester?: string;
   funding?: string;
@@ -101,9 +93,7 @@ export interface Client {
   consultant?: string;
   startDate?: string;
   notes?: string;
-  gmailEmail?: string;
   apps: Application[];
-  docs: ClientDocument[];
   tasks: Task[];
   tests?: TestResult[];
   reports?: Report[];

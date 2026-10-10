@@ -23,7 +23,6 @@ export default defineConfig({
     host: '127.0.0.1',
     proxy: {
       '/api': 'http://127.0.0.1:4173',
-      '/oauth': 'http://127.0.0.1:4173',
     },
   },
   test: {

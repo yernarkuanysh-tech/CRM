@@ -63,11 +63,9 @@ sudo chmod 700 /opt/granted-crm/data
 sudo chmod 600 /opt/granted-crm/data/*
 ```
 
-Файл `data/encryption.key` переносите вместе с базой. Без него существующие Google OAuth-токены невозможно расшифровать.
-
 ## 4. Production-переменные
 
-Скопируйте `deploy/pskz/production.env.example` в `/etc/granted-crm.env`, замените `CRM_DOMAIN` и при необходимости добавьте Google OAuth credentials:
+Скопируйте `deploy/pskz/production.env.example` в `/etc/granted-crm.env`, замените `CRM_DOMAIN` и при необходимости добавьте ключ Resend для приглашений:
 
 ```bash
 sudo cp /opt/granted-crm/deploy/pskz/production.env.example /etc/granted-crm.env
@@ -122,13 +120,7 @@ MAIL_FROM="GrantEd CRM <crm@ВАШ_ДОМЕН>"
 
 Если эти параметры не заполнены, владелец всё равно может создать приглашение и скопировать одноразовую ссылку вручную.
 
-## 8. Google Drive и Gmail
-
-В Google Cloud Console добавьте точный redirect URI:
-
-```text
-https://ВАШ_ДОМЕН/oauth/google/callback
-```
+## 8. Перезапуск после изменения настроек
 
 Перезапустите сервис после изменения `/etc/granted-crm.env`:
 
@@ -139,7 +131,7 @@ sudo journalctl -u granted-crm -n 100 --no-pager
 
 ## 9. Резервные копии
 
-CRM хранит локальные копии в `/opt/granted-crm/data/backups`, но они находятся на том же диске. Подключите автоматическое резервное копирование VPS в панели PS.kz и отдельно храните защищённую копию `crm.sqlite` вместе с `encryption.key`.
+CRM хранит локальные копии в `/opt/granted-crm/data/backups`, но они находятся на том же диске. Подключите автоматическое резервное копирование VPS в панели PS.kz и отдельно храните защищённую копию `crm.sqlite`.
 
 ## Быстрая диагностика
 

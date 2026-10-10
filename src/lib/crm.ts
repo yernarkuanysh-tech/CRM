@@ -8,7 +8,6 @@ export const currencies: Currency[] = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF',
 export const feeLabels: Record<FeeStatus, string> = {unknown: 'Не указан', unpaid: 'Не оплачен', paid: 'Оплачен клиентом', waived: 'Без сбора / waiver'};
 export const semesters = ['Не указан', 'Fall', 'Spring', 'Summer', 'Winter'];
 export const exams = ['Не уточнено', 'Нет', 'GRE', 'GMAT', 'GRE или GMAT', 'GRE и GMAT'];
-export const documentTypes = ['Резюме', 'Мотивационное письмо', 'Рекомендация', 'Фото', 'Диплом / транскрипт', 'Другой документ'];
 export const PROTOTYPE_KEY = 'admissions-crm-demo-v1';
 
 export const testScales: Record<TestType, {min: number; max: number; step: number; label: string}> = {
@@ -36,14 +35,6 @@ export const allTasks = (clients: Client[]): TaskWithClient[] => clients.flatMap
 
 export const initials = (name: string, separator: string | RegExp = ' ') => name.split(separator).map(v => v[0]).slice(0, 2).join('');
 
-export function googleLink(value?: string) {
-  try {
-    const u = new URL(value ?? '');
-    return u.protocol === 'https:' && ['drive.google.com', 'docs.google.com'].includes(u.hostname) ? u.href : '';
-  } catch {
-    return '';
-  }
-}
 
 export function money(amount: number, currency: string) {
   return new Intl.NumberFormat('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(amount) + ' ' + currency;

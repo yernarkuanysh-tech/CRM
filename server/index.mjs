@@ -3,7 +3,6 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {adminService} from './admin.mjs';
-import {googleService} from './google.mjs';
 import {mailService} from './mailer.mjs';
 import {teamService} from './team.mjs';
 import {openStore} from './store.mjs';
@@ -15,7 +14,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export function createApp({directory=path.join(root,'data'),origin='http://127.0.0.1:4173',mailer:mailerOverride}={}){
  const store=openStore(directory),{db}=store,attempts=new Map();
  store.backup();
- const google=googleService(store,origin),admin=adminService(store),mailer=mailerOverride||mailService(),team=teamService(store,origin,mailer);
+ const admin=adminService(store),mailer=mailerOverride||mailService(),team=teamService(store,origin,mailer);
  const timer=setInterval(()=>{try{store.backup()}catch(error){console.error('Backup failed',error.message)}},3600000);timer.unref();
  const server=http.createServer(async(req,res)=>{
   const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))};
@@ -49,7 +48,6 @@ export function createApp({directory=path.join(root,'data'),origin='http://127.0
     }
     attempts.delete(key);return send(200,{csrf:setSession(user),user});
    }
-   if(p==='/oauth/google/callback'&&req.method==='GET'){if(!session)fail('Войдите в CRM и повторите подключение.',401);const target=await google.callback(url.searchParams,digest(cookie));res.writeHead(303,{Location:'/#'+target});return res.end()}
 
    if(p.startsWith('/api/')){
     if(!session)fail('Войдите в CRM.',401);if(mutating&&!safeEqual(req.headers['x-csrf-token'],session.csrf))fail('Сессия изменилась. Обновите страницу.',403);
@@ -68,11 +66,6 @@ export function createApp({directory=path.join(root,'data'),origin='http://127.0
     if(p==='/api/team/invitations'&&req.method==='POST'){ownerOnly();const settings=admin.status();return send(201,await team.invite(await body(),settings.organization))}
     if(p==='/api/team/invitations/revoke'&&req.method==='POST'){ownerOnly();const data=await body();return send(200,team.revoke(data.id))}
     if(p==='/api/team/status'&&req.method==='POST'){ownerOnly();const data=await body();return send(200,team.setStatus(data.id,data.status))}
-    if(p==='/api/google/status'&&req.method==='GET')return send(200,google.status());
-    if(p==='/api/google/authorize'&&req.method==='POST'){ownerOnly();return send(200,{url:google.authorize(await body(),digest(cookie))})}
-    if(p==='/api/google/disconnect'&&req.method==='POST'){ownerOnly();const data=await body();google.disconnect(data.owner);return send(200,{ok:true})}
-    if(p==='/api/google/messages'&&req.method==='GET')return send(200,await google.messages(url.searchParams.get('client')));
-    if(p==='/api/google/files'&&req.method==='GET')return send(200,await google.files(url.searchParams.get('client')));
     if(p==='/api/state'&&req.method==='GET')return send(200,store.getState());
     if(p==='/api/state'&&req.method==='PUT'){const data=await body(),previous=store.getState();validateClients(data.clients,previous.clients);return send(200,{revision:store.updateState(data.clients,data.revision)})}
     if(p==='/api/export'&&req.method==='GET'){ownerOnly();res.setHeader('Content-Disposition','attachment; filename="granted-crm.json"');return send(200,store.getState())}

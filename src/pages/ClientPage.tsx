@@ -1,21 +1,19 @@
-import {useState, type FormEvent, type ReactNode} from 'react';
+import {type FormEvent, type ReactNode} from 'react';
 import {useModal, useToast} from '../components/feedback';
-import {GoogleConnectButton, GoogleLoadButton, GoogleResultView, type GoogleResult} from '../components/Google';
 import {Shell} from '../components/Shell';
-import {Avatar, Badge, BtnRow, card, cx, Empty, EmptyTitle, Heading, Icon, localNote, Notice, Options, Person, SectionTop, StatusBadge, subtle, TableWrap} from '../components/ui';
+import {Avatar, Badge, BtnRow, card, cx, Empty, EmptyTitle, Heading, Icon, localNote, Options, Person, SectionTop, StatusBadge, subtle, TableWrap} from '../components/ui';
 import {ApplicationForm} from '../forms/ApplicationForm';
 import {ClientForm} from '../forms/ClientForm';
-import {DocumentForm} from '../forms/DocumentForm';
 import {TaskForm} from '../forms/TaskForm';
 import {TestForm} from '../forms/TestForm';
-import {clientStatus, completed, feeLabels, feeTotals, googleLink, initials, money, statuses, testScales} from '../lib/crm';
+import {clientStatus, completed, feeLabels, feeTotals, initials, money, statuses, testScales} from '../lib/crm';
 import {fmt, fullDate} from '../lib/dates';
 import {useCrm} from '../state';
 import type {AppStatus, Client} from '../types';
 import {ReportsTab} from './ReportsTab';
 import {TaskRow} from './TasksPage';
 
-const tabNames = ['overview', 'applications', 'documents', 'tasks', 'mail', 'reports', 'tests', 'notes'] as const;
+const tabNames = ['overview', 'applications', 'tasks', 'reports', 'tests', 'notes'] as const;
 type Tab = typeof tabNames[number];
 
 export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) {
@@ -28,9 +26,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
   const tabs: [Tab, string, number | ''][] = [
     ['overview', 'Информация', ''],
     ['applications', 'Заявки', c.apps.length],
-    ['documents', 'Документы', c.docs.length],
     ['tasks', 'Задачи', c.tasks.filter(t => !t.done).length],
-    ['mail', 'Почта', ''],
     ['reports', 'Отчёты', (c.reports || []).length],
     ['tests', 'Тесты', (c.tests || []).length],
     ['notes', 'Заметки', ''],
@@ -95,9 +91,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
           </nav>
           {tab === 'overview' && <OverviewTab client={c} onEdit={editClient} />}
           {tab === 'applications' && <ApplicationsTab client={c} />}
-          {tab === 'documents' && <DocumentsTab client={c} onEdit={editClient} />}
           {tab === 'tasks' && <TasksTab client={c} />}
-          {tab === 'mail' && <MailTab client={c} />}
           {tab === 'reports' && <ReportsTab client={c} />}
           {tab === 'tests' && <TestsSection client={c} />}
           {tab === 'notes' && <NotesTab key={c.id} client={c} />}
@@ -228,33 +222,6 @@ function ApplicationsTab({client: c}: {client: Client}) {
   );
 }
 
-function DocumentsTab({client: c, onEdit}: {client: Client; onEdit(): void}) {
-  const modal = useModal();
-  const [result, setResult] = useState<GoogleResult | null>(null);
-  const folder = googleLink(c.folder);
-  return (
-    <>
-      <SectionTop><h2>Документы клиента</h2><button onClick={() => modal.open('Добавить документ', <DocumentForm client={c} />)}><Icon name="plus" /> Ссылка</button></SectionTop>
-      <Notice>Файлы остаются в Google Drive. Здесь хранятся ссылки — CRM не меняет права доступа к документам.</Notice>
-      <div className={cx('mb-13 p-19 motion-safe:animate-appear', card)}>
-        <SectionTop margin="m-0">
-          <div><h3>Папка клиента</h3><span className={subtle}>Фото, резюме, письма и другие документы</span></div>
-          {folder ? <a href={folder} target="_blank" rel="noopener noreferrer">Открыть папку</a> : <button onClick={onEdit}>Привязать</button>}
-        </SectionTop>
-      </div>
-      {c.docs.map(d => (
-        <div key={d.id} className="flex items-center gap-13 border-b border-line py-17">
-          <span className="grid h-40 w-35 place-items-center rounded-[5px] bg-tint text-ink"><Icon name="file" /></span>
-          <div><strong>{d.name}</strong><small className="mt-5 block text-muted">{d.type}</small></div>
-          <a className="ml-auto text-[12px] text-link" href={googleLink(d.url)} target="_blank" rel="noopener noreferrer">Открыть</a>
-        </div>
-      ))}
-      {!c.docs.length && <Empty><EmptyTitle>Закрепите важные документы</EmptyTitle>Добавьте ссылку на резюме, мотивационное письмо или фото.</Empty>}
-      <BtnRow><GoogleLoadButton action="files" client={c.id} onResult={setResult}>Загрузить файлы из папки Drive</GoogleLoadButton></BtnRow>
-      <GoogleResultView result={result} />
-    </>
-  );
-}
 
 function TasksTab({client: c}: {client: Client}) {
   const modal = useModal();
@@ -267,20 +234,6 @@ function TasksTab({client: c}: {client: Client}) {
   );
 }
 
-function MailTab({client: c}: {client: Client}) {
-  const [result, setResult] = useState<GoogleResult | null>(null);
-  return (
-    <>
-      <SectionTop><h2>Почта клиента</h2></SectionTop>
-      <p>Подключите Gmail с разрешения владельца. Здесь отображаются последние 20 писем подключённого ящика.</p>
-      <BtnRow>
-        <GoogleConnectButton kind="gmail" client={c.id}>Подключить Gmail</GoogleConnectButton>
-        <GoogleLoadButton action="messages" client={c.id} onResult={setResult}>Загрузить письма</GoogleLoadButton>
-      </BtnRow>
-      <GoogleResultView result={result} />
-    </>
-  );
-}
 
 function NotesTab({client: c}: {client: Client}) {
   const {updateClient} = useCrm();
