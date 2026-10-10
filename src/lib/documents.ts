@@ -55,7 +55,8 @@ export async function deleteDocument(doc: ClientDocument) {
 /** Removes the stored files of deleted clients (their records go with the client row). Best-effort. */
 export async function removeClientFiles(clientIds: string[]) {
   for (const clientId of clientIds) {
-    const {data} = await supabase.storage.from(bucket).list(clientId, {limit: 1000});
-    if (data?.length) await supabase.storage.from(bucket).remove(data.map(file => `${clientId}/${file.name}`));
+    const {data, error} = await supabase.storage.from(bucket).list(clientId, {limit: 1000});
+    if (error) throw Error(errorMessage(error));
+    if (data?.length) check(await supabase.storage.from(bucket).remove(data.map(file => `${clientId}/${file.name}`)));
   }
 }

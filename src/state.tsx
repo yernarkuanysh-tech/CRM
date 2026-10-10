@@ -31,6 +31,8 @@ interface CrmValue {
   save(next: Client[]): Promise<boolean>;
   /** Applies `recipe` to a copy of the client and saves. Errors thrown by `recipe` propagate. */
   updateClient(id: string, recipe: (draft: Client) => void): Promise<boolean>;
+  /** Permanently deletes one client card. The server permits this only for the workspace owner. */
+  deleteClient(id: string): Promise<boolean>;
   list: ListState;
   setList: Dispatch<SetStateAction<ListState>>;
   selectedReportId: string | null;
@@ -102,6 +104,35 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
     return save(current.map((c, i) => i === index ? draft : c));
   }, [save]);
 
+  const deleteClient = useCallback(async (id: string) => {
+    if (savingRef.current) throw Error('Дождитесь завершения сохранения.');
+    const client = clientsRef.current.find(c => c.id === id);
+    const revision = revisions.current[id];
+    if (!client || !revision) throw Error('Клиент не найден. Обновите страницу.');
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await rpc<void>('delete_client', {p_id: id, p_revision: revision});
+      const next = clientsRef.current.filter(c => c.id !== id);
+      const nextRevisions = {...revisions.current};
+      delete nextRevisions[id];
+      revisions.current = nextRevisions;
+      clientsRef.current = next;
+      setClients(next);
+      setSaveError('');
+      try {
+        await removeClientFiles([id]);
+        return true;
+      } catch {
+        return false;
+      }
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }, []);
+
   const clientById = useCallback((id?: string) => clients.find(c => c.id === id), [clients]);
 
   // Read-only client search for in-browser agents (WebMCP), when the browser supports it.
@@ -125,9 +156,9 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
   }, []);
 
   const value = useMemo<CrmValue>(() => ({
-    user, setUser, settings, setSettings, clients, clientById, save, updateClient,
+    user, setUser, settings, setSettings, clients, clientById, save, updateClient, deleteClient,
     list, setList, selectedReportId, setSelectedReportId, signOut: onSignOut,
-  }), [user, settings, clients, clientById, save, updateClient, list, selectedReportId, onSignOut]);
+  }), [user, settings, clients, clientById, save, updateClient, deleteClient, list, selectedReportId, onSignOut]);
 
   return (
     <CrmContext.Provider value={value}>

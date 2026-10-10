@@ -10,6 +10,7 @@ import {clientStatus, completed, feeLabels, feeTotals, initials, money, statuses
 import {fmt, fullDate} from '../lib/dates';
 import {deleteDocument, DOCUMENT_ACCEPT, downloadDocument, fileSize, listDocuments, uploadDocument} from '../lib/documents';
 import {errorMessage} from '../lib/api';
+import {navigate} from '../route';
 import {useCrm} from '../state';
 import type {AppStatus, Client, ClientDocument} from '../types';
 import {ReportsTab} from './ReportsTab';
@@ -19,7 +20,7 @@ const tabNames = ['overview', 'applications', 'tasks', 'reports', 'tests', 'docu
 type Tab = typeof tabNames[number];
 
 export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) {
-  const {clientById} = useCrm();
+  const {clientById, user} = useCrm();
   const modal = useModal();
   const c = clientById(id);
   if (!c) {
@@ -92,7 +93,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
               </a>
             ))}
           </nav>
-          {tab === 'overview' && <OverviewTab client={c} onEdit={editClient} />}
+          {tab === 'overview' && <OverviewTab client={c} onEdit={editClient} canDelete={user.role === 'owner'} />}
           {tab === 'applications' && <ApplicationsTab client={c} />}
           {tab === 'tasks' && <TasksTab client={c} />}
           {tab === 'reports' && <ReportsTab client={c} />}
@@ -105,7 +106,8 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
   );
 }
 
-function OverviewTab({client: c, onEdit}: {client: Client; onEdit(): void}) {
+function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): void; canDelete: boolean}) {
+  const modal = useModal();
   const fields: [string, string | undefined][] = [
     ['ФИО клиента', c.name],
     ['Направление / поле', c.academicField],
@@ -135,7 +137,59 @@ function OverviewTab({client: c, onEdit}: {client: Client; onEdit(): void}) {
       </dl>
       <FeeSummary client={c} />
       <TestsSection client={c} />
+      {canDelete && (
+        <section className="mt-32 rounded-[8px] border border-[#f2b8b5] bg-[#fff8f7] p-18">
+          <SectionTop margin="mb-0">
+            <div>
+              <h2 className="text-danger">Удаление абитуриента</h2>
+              <p className="mt-6 mb-0 text-[12px] leading-[1.6] text-muted">Карточка, заявки, задачи, отчёты и документы будут удалены без возможности восстановления.</p>
+            </div>
+            <button className="border-[#e5484d] text-[#c62a2f] hover:bg-[#fff0ef]" onClick={() => modal.open('Удалить абитуриента', <DeleteClientForm client={c} />)}>Удалить</button>
+          </SectionTop>
+        </section>
+      )}
     </>
+  );
+}
+
+function DeleteClientForm({client}: {client: Client}) {
+  const {deleteClient} = useCrm();
+  const modal = useModal(), toast = useToast();
+  const [confirmation, setConfirmation] = useState('');
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const matches = confirmation.trim() === client.name.trim();
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!matches || deleting) return;
+    setDeleting(true);
+    setError('');
+    try {
+      const filesRemoved = await deleteClient(client.id);
+      modal.close();
+      navigate('clients');
+      toast(filesRemoved ? `Абитуриент ${client.name} удалён` : `Карточка ${client.name} удалена, но часть файлов не удалось очистить`);
+    } catch (caught) {
+      setError(errorMessage(caught));
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <p>Это действие нельзя отменить. Для подтверждения введите имя абитуриента:</p>
+      <p className="rounded-[6px] bg-tint px-12 py-9 font-medium text-ink">{client.name}</p>
+      <label>
+        Имя абитуриента
+        <input autoFocus autoComplete="off" value={confirmation} onChange={event => setConfirmation(event.target.value)} aria-describedby="delete-client-error" />
+      </label>
+      <p id="delete-client-error" className="min-h-20 text-[12px] text-danger" role="alert">{error}</p>
+      <div className="mt-23 flex justify-end gap-8">
+        <button type="button" onClick={modal.close} disabled={deleting}>Отмена</button>
+        <button type="submit" className="border-[#c62a2f] bg-[#c62a2f] text-white hover:border-[#a82429] hover:bg-[#a82429]" disabled={!matches || deleting}>{deleting ? 'Удаление…' : 'Удалить навсегда'}</button>
+      </div>
+    </form>
   );
 }
 
