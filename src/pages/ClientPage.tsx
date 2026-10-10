@@ -1,4 +1,4 @@
-import {type FormEvent, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode} from 'react';
 import {useModal, useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
 import {Avatar, Badge, BtnRow, card, cx, Empty, EmptyTitle, Heading, Icon, localNote, Options, Person, SectionTop, StatusBadge, subtle, TableWrap} from '../components/ui';
@@ -8,12 +8,14 @@ import {TaskForm} from '../forms/TaskForm';
 import {TestForm} from '../forms/TestForm';
 import {clientStatus, completed, feeLabels, feeTotals, initials, money, statuses, testScales} from '../lib/crm';
 import {fmt, fullDate} from '../lib/dates';
+import {deleteDocument, DOCUMENT_ACCEPT, downloadDocument, fileSize, listDocuments, uploadDocument} from '../lib/documents';
+import {errorMessage} from '../lib/api';
 import {useCrm} from '../state';
-import type {AppStatus, Client} from '../types';
+import type {AppStatus, Client, ClientDocument} from '../types';
 import {ReportsTab} from './ReportsTab';
 import {TaskRow} from './TasksPage';
 
-const tabNames = ['overview', 'applications', 'tasks', 'reports', 'tests', 'notes'] as const;
+const tabNames = ['overview', 'applications', 'tasks', 'reports', 'tests', 'documents', 'notes'] as const;
 type Tab = typeof tabNames[number];
 
 export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) {
@@ -29,6 +31,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
     ['tasks', 'Задачи', c.tasks.filter(t => !t.done).length],
     ['reports', 'Отчёты', (c.reports || []).length],
     ['tests', 'Тесты', (c.tests || []).length],
+    ['documents', 'Документы', ''],
     ['notes', 'Заметки', ''],
   ];
   const tab: Tab = (tabNames as readonly string[]).includes(requestedTab) ? requestedTab as Tab : 'overview';
@@ -94,6 +97,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
           {tab === 'tasks' && <TasksTab client={c} />}
           {tab === 'reports' && <ReportsTab client={c} />}
           {tab === 'tests' && <TestsSection client={c} />}
+          {tab === 'documents' && <DocumentsTab key={c.id} client={c} />}
           {tab === 'notes' && <NotesTab key={c.id} client={c} />}
         </section>
       </div>
@@ -234,6 +238,77 @@ function TasksTab({client: c}: {client: Client}) {
   );
 }
 
+
+function DocumentsTab({client: c}: {client: Client}) {
+  const toast = useToast();
+  const input = useRef<HTMLInputElement>(null);
+  const [docs, setDocs] = useState<ClientDocument[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const reload = () => listDocuments(c.id).then(setDocs, e => setError(errorMessage(e)));
+  useEffect(() => { reload(); }, [c.id]);
+
+  async function run(action: () => Promise<unknown>, done?: string) {
+    setBusy(true);
+    setError('');
+    try {
+      await action();
+      if (done) toast(done);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onUpload(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...event.target.files || []];
+    event.target.value = '';
+    if (!files.length) return;
+    await run(async () => {
+      for (const file of files) await uploadDocument(c.id, file);
+    }, files.length > 1 ? `Загружено файлов: ${files.length}` : 'Документ загружен');
+    await reload();
+  }
+
+  async function onDelete(doc: ClientDocument) {
+    if (!window.confirm(`Удалить «${doc.name}»? Файл будет удалён без возможности восстановления.`)) return;
+    await run(() => deleteDocument(doc), 'Документ удалён');
+    await reload();
+  }
+
+  return (
+    <>
+      <SectionTop>
+        <div><h2>Документы клиента</h2><p className={subtle}>PDF, сканы, фото, Word и Excel · до 20 МБ</p></div>
+        <button disabled={busy} onClick={() => input.current?.click()}><Icon name="plus" /> {busy ? 'Загрузка…' : 'Загрузить'}</button>
+        <input ref={input} type="file" multiple hidden accept={DOCUMENT_ACCEPT} onChange={onUpload} />
+      </SectionTop>
+      {error && <p className="mb-14 text-[12px] text-danger" role="alert">{error}</p>}
+      {docs === null ? <p className={subtle}>Загрузка списка…</p> : docs.length ? (
+        <TableWrap>
+          <thead><tr><th>Файл</th><th>Размер</th><th>Загружен</th><th></th></tr></thead>
+          <tbody>
+            {docs.map(d => (
+              <tr key={d.id}>
+                <td className="wrap-anywhere"><Icon name="file" /> {d.name}</td>
+                <td className="whitespace-nowrap">{fileSize(d.size)}</td>
+                <td className="whitespace-nowrap">{new Date(d.createdAt).toLocaleDateString('ru-RU')}</td>
+                <td>
+                  <div className="flex justify-end gap-8">
+                    <button disabled={busy} onClick={() => run(() => downloadDocument(d))}>Скачать</button>
+                    <button disabled={busy} onClick={() => onDelete(d)}>Удалить</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </TableWrap>
+      ) : <Empty><EmptyTitle>Документов пока нет</EmptyTitle>Загрузите паспорт, транскрипт, сертификаты или письма.</Empty>}
+    </>
+  );
+}
 
 function NotesTab({client: c}: {client: Client}) {
   const {updateClient} = useCrm();

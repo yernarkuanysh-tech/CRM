@@ -1,6 +1,7 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction} from 'react';
 import {createPortal} from 'react-dom';
 import {errorMessage, rpc} from './lib/api';
+import {removeClientFiles} from './lib/documents';
 import {useToast} from './components/feedback';
 import type {Client, Settings, User} from './types';
 
@@ -78,6 +79,7 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
         const nextRevisions = {...revisions.current, ...saved};
         for (const {id} of deletes) delete nextRevisions[id];
         revisions.current = nextRevisions;
+        if (deletes.length) removeClientFiles(deletes.map(d => d.id)).catch(() => {});
       }
       clientsRef.current = next;
       setClients(next);

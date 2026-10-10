@@ -100,6 +100,16 @@ export interface Client {
   demo?: boolean;
 }
 
+/** A file in Supabase Storage; not part of the client card. */
+export interface ClientDocument {
+  id: string;
+  clientId: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  createdAt: string;
+}
+
 export type Role = 'owner' | 'staff';
 
 export interface User {
