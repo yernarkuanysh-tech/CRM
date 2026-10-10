@@ -1,0 +1,187 @@
+/* Tailwind without Preflight: the UI was designed on top of browser defaults
+   (paragraph, heading and list margins), so only theme + utilities are loaded. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+  --color-ink: #171717;
+  --color-ink-soft: #4d4d4d;
+  --color-muted: #666;
+  --color-faint: #888;
+  --color-line: #ebebeb;
+  --color-control: #dedede;
+  --color-canvas: #fafafa;
+  --color-tint: #f5f5f5;
+  --color-link: #0070f3;
+  --color-danger: #ee0000;
+  --color-warning: #ab570a;
+  --color-warning-bg: #ffefcf;
+
+  /* 1 spacing unit = 1px, so p-13 is exactly 13px. */
+  --spacing: 1px;
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 780px;
+  --breakpoint-lg: 850px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1500px;
+
+  --font-sans: Inter, Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  --shadow-card: inset 0 0 0 1px #00000003, 0 1px 1px #00000005, 0 2px 2px #00000008;
+  --shadow-stats: inset 0 0 0 1px #00000005, 0 1px 1px #00000005, 0 2px 2px #00000008;
+  --shadow-login: inset 0 0 0 1px #00000003, 0 2px 2px #00000008, 0 8px 16px -8px #0000000a;
+  --shadow-dialog: 0 1px 1px #00000005, 0 8px 16px -4px #0000000a, 0 24px 32px -8px #0000000f;
+  --shadow-toast: 0 1px 1px #00000005, 0 8px 16px -4px #00000012, 0 24px 32px -8px #00000018;
+  --shadow-mark: 0 1px 1px #00000005;
+
+  --animate-appear: appear .16s ease-out;
+  @keyframes appear {
+    from { opacity: .6; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@utility primary {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-white);
+  box-shadow: 0 1px 1px #0000000a;
+  &:hover:not(:disabled) {
+    background: #333;
+    border-color: #333;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "ss02";
+    font-size: 14px;
+    color: var(--color-ink);
+    background: var(--color-canvas);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--color-canvas); }
+  ::selection { background: #171717; color: #f2f2f2; }
+
+  button, input, select, textarea { font: inherit; touch-action: manipulation; }
+  a { touch-action: manipulation; color: var(--color-ink); text-decoration: none; }
+  button, a { -webkit-tap-highlight-color: #dce7ff; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
+
+  button {
+    cursor: pointer;
+    min-height: 40px;
+    border: 1px solid var(--color-control);
+    border-radius: 6px;
+    padding: 9px 14px;
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-weight: 500;
+    letter-spacing: -.01em;
+    box-shadow: 0 1px 1px #00000005, 0 2px 2px #00000008;
+  }
+  button:hover:not(:disabled) { background: var(--color-tint); border-color: #cfcfcf; }
+  button:disabled { opacity: .5; cursor: default; }
+
+  input, select, textarea {
+    min-width: 0;
+    min-height: 40px;
+    border: 1px solid var(--color-control);
+    border-radius: 6px;
+    padding: 10px 11px;
+    background: var(--color-white);
+    color: var(--color-ink);
+    box-shadow: 0 1px 2px #00000008;
+  }
+  input::placeholder { color: var(--color-faint); }
+  select { max-width: 100%; }
+
+  h2 { font-size: 16px; font-weight: 600; margin: 0; }
+  h3 { font-size: 14px; margin: 0 0 8px; }
+
+  table { border-collapse: collapse; width: 100%; text-align: left; white-space: nowrap; background: var(--color-white); }
+  th {
+    background: var(--color-canvas);
+    border-bottom: 1px solid var(--color-line);
+    padding: 12px 14px;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: .025em;
+    text-transform: uppercase;
+  }
+  td { border-bottom: 1px solid var(--color-line); padding: 15px 14px; color: var(--color-ink); font-size: 14px; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--color-canvas); }
+  @media (min-width: 1500px) {
+    td { padding-top: 18px; padding-bottom: 18px; }
+  }
+
+  form label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 16px; }
+  form label :is(input, select, textarea) { display: block; width: 100%; margin-top: 7px; font-weight: 400; }
+  form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    button, a { transition: background .12s, color .12s; }
+  }
+}
+
+@layer components {
+  body.saving :is(#app, #modal) { pointer-events: none; opacity: .75; }
+
+  /* Paragraphs inside modal bodies share one muted reading style. */
+  .modal-body p { line-height: 1.7; color: var(--color-muted); }
+
+  /* Report paper: an A4 preview that mirrors the generated PDF and prints as one page. */
+  .report-paper { width: 718px; min-height: 1010px; background: #fff; color: #243042; padding: 28px 30px; margin: auto; box-shadow: 0 3px 12px #21314a14; box-sizing: content-box; }
+  .report-inner { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+  .report-header { display: flex; justify-content: space-between; border-bottom: 2px solid #171717; padding-bottom: 13px; margin-bottom: 20px; }
+  .report-header > strong { position: relative; padding-left: 39px; font-size: 24px; color: #171717; letter-spacing: -.02em; }
+  .report-header > strong::before { content: ""; position: absolute; left: 0; top: 0; width: 30px; height: 32px; background: #fff url("/granted-logo-mark.jpg") center/contain no-repeat; }
+  .report-header strong span { display: block; font-size: 10px; font-weight: 400; color: #636c79; letter-spacing: 0; }
+  .report-header > div { font-size: 10px; color: #636c79; text-align: right; line-height: 1.8; letter-spacing: .04em; }
+  .report-header > div span { font-size: 12px; color: #243042; }
+  .report-paper h1 { font-size: 25px; line-height: 1.2; margin: 0 0 5px; letter-spacing: -.02em; }
+  .report-subtitle { color: #636c79; font-size: 12px; }
+  .report-stage { margin-top: 15px; padding: 11px 14px; background: #fafafa; }
+  .report-paper h2 { font-size: 12px; line-height: 1.4; margin: 0 0 7px; font-weight: 650; }
+  .report-stage h2 { font-size: 14px; margin: 0; }
+  .report-paper p { margin: 5px 0 0; white-space: pre-wrap; }
+  .report-stage p { font-size: 11px; color: #636c79; }
+  .report-section { margin-top: 17px; }
+  .report-caption { font-size: 10px !important; color: #636c79; line-height: 1.5; }
+  .report-table { table-layout: fixed; white-space: normal; margin-top: 8px; width: 100%; }
+  .report-table th, .report-table td { padding: 7px 8px; font-size: 10px; line-height: 1.35; vertical-align: top; overflow-wrap: anywhere; }
+  .report-table th:first-child { width: 42%; }
+  .report-table th:nth-child(2) { width: 18%; }
+  .report-table th:nth-child(3) { width: 15%; }
+  .report-table th:nth-child(4) { width: 25%; }
+  .report-table small { display: block; font-size: 9px; color: #636c79; margin-top: 3px; }
+  .report-action { margin-top: 17px; background: #fafafa; border-left: 3px solid #171717; padding: 10px 13px; }
+  .report-footer { display: flex; justify-content: space-between; gap: 22px; border-top: 1px solid #e7e9ee; margin-top: 22px; padding-top: 11px; font-size: 9px; color: #636c79; }
+  .report-footer span:last-child { max-width: 280px; text-align: right; }
+
+  #report-print-root { display: none; }
+  @page { size: A4; margin: 10mm; }
+  @media print {
+    body.printing-report > * { display: none !important; }
+    body.printing-report > #report-print-root { display: block !important; }
+    body.printing-report { background: white !important; margin: 0 !important; }
+    .printing-report .report-paper { width: 190mm !important; min-height: 0 !important; height: auto !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: 0 !important; box-sizing: border-box !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .printing-report .report-inner { width: 100%; }
+    .printing-report .report-paper table { break-inside: avoid; }
+    .printing-report .report-section, .printing-report .report-action, .printing-report .report-footer { break-inside: avoid; }
+    .printing-report .report-paper h1, .printing-report .report-paper h2 { break-after: avoid; }
+  }
+}

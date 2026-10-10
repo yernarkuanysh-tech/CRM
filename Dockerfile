@@ -4,9 +4,10 @@ FROM node:${NODE_VERSION}-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
+RUN npm run build && npm prune --omit=dev
 
 EXPOSE 4173
 

@@ -9,3 +9,5 @@ data/
 *.log
 *.zip
 .vscode/
+node_modules/
+dist/

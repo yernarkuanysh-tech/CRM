@@ -45,10 +45,11 @@ sudo chown -R grantedcrm:grantedcrm /opt/granted-crm
 
 ## 3. Перенос приложения и базы
 
-На Mac остановите локальную CRM, чтобы получить согласованную копию SQLite. Затем из папки `admissions-crm` выполните:
+На Mac остановите локальную CRM, чтобы получить согласованную копию SQLite. Затем из папки `admissions-crm` соберите интерфейс и выполните перенос (на сервер попадает готовая папка `dist/`, `node_modules` не нужен):
 
 ```bash
-rsync -av --exclude '.git' --exclude 'data' ./ SERVER_USER@SERVER_IP:/tmp/granted-crm/
+npm ci && npm run build
+rsync -av --exclude '.git' --exclude 'data' --exclude 'node_modules' ./ SERVER_USER@SERVER_IP:/tmp/granted-crm/
 rsync -av ./data/ SERVER_USER@SERVER_IP:/tmp/granted-crm-data/
 ```
 
