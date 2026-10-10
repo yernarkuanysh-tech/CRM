@@ -1,8 +1,8 @@
+# Docker image config; ${PORT} is filled in by the nginx image at start (Railway sets PORT).
 server {
-    listen 80;
-    listen [::]:80;
-    server_name CRM_DOMAIN;
-    root /var/www/granted-crm;
+    listen ${PORT};
+    listen [::]:${PORT};
+    root /usr/share/nginx/html;
 
     add_header X-Content-Type-Options nosniff always;
     add_header Referrer-Policy no-referrer always;

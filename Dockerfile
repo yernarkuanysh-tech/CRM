@@ -1,16 +1,15 @@
 ARG NODE_VERSION=24
 
-FROM node:${NODE_VERSION}-alpine
+FROM node:${NODE_VERSION}-alpine AS build
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
-
 COPY . .
-RUN npm run build && npm prune --omit=dev
+RUN npm run build
 
+# The CRM is a static app talking to Supabase; nginx only serves dist/.
+FROM nginx:1.29-alpine
+COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+ENV PORT=4173
 EXPOSE 4173
-
-ENV NODE_ENV=production
-
-CMD ["npm", "start"]

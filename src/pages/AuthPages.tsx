@@ -1,10 +1,16 @@
 import {useEffect, useState, type FormEvent, type ReactNode} from 'react';
 import {useToast} from '../components/feedback';
 import {BrandLogo, PasswordField, subtle} from '../components/ui';
-import {api, errorMessage, setCsrf} from '../lib/api';
-import type {User} from '../types';
+import {check, errorMessage, rpc, supabase} from '../lib/api';
 
 const formValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as Record<string, string>;
+
+/** Creates the Supabase account; the database decides whether it becomes the owner or an invited staff member. */
+async function signUp(email: string, password: string, data: Record<string, string> = {}) {
+  const {data: result} = check(await supabase.auth.signUp({email, password, options: {data, emailRedirectTo: location.origin + location.pathname}}));
+  // With "Confirm email" enabled in Supabase, the account exists but has no session until the link is opened.
+  if (!result.session) throw Error('Учётная запись создана. Подтвердите почту по ссылке из письма, затем войдите.');
+}
 
 function AuthCard({className = '', children}: {className?: string; children: ReactNode}) {
   return (
@@ -39,7 +45,17 @@ function useSubmit(action: (form: HTMLFormElement) => Promise<void>) {
 
 export function LoginPage({initialized, onSignedIn, onRecover}: {initialized: boolean; onSignedIn(): void; onRecover(): void}) {
   const {error, onSubmit} = useSubmit(async form => {
-    await api('/api/auth/' + (initialized ? 'login' : 'setup'), {method: 'POST', body: JSON.stringify(formValues(form))});
+    const {email, password} = formValues(form);
+    if (!initialized) {
+      if (password.length < 12) throw Error('Пароль должен содержать минимум 12 символов.');
+      await signUp(email.trim(), password);
+    } else {
+      check(await supabase.auth.signInWithPassword({email: email.trim(), password}));
+      if (!await rpc('crm_settings')) {
+        await supabase.auth.signOut({scope: 'local'});
+        throw Error('Доступ к CRM отключён владельцем.');
+      }
+    }
     onSignedIn();
   });
   return (
@@ -64,18 +80,17 @@ interface InviteInfo {
   organization: string;
 }
 
-export function InvitePage({token, onSignedIn, onBack}: {token: string; onSignedIn(user: User): void; onBack(): void}) {
+export function InvitePage({token, onSignedIn, onBack}: {token: string; onSignedIn(): void; onBack(): void}) {
   const [invite, setInvite] = useState<InviteInfo | null>(null);
   const [loadError, setLoadError] = useState('');
   useEffect(() => {
-    api<InviteInfo>('/api/auth/invite?token=' + encodeURIComponent(token)).then(setInvite, error => setLoadError(errorMessage(error)));
+    rpc<InviteInfo>('inspect_invitation', {p_token: token}).then(setInvite, error => setLoadError(errorMessage(error)));
   }, [token]);
   const {error, onSubmit} = useSubmit(async form => {
     const data = formValues(form);
     if (data.password !== data.confirmPassword) throw Error('Пароли не совпадают.');
-    const result = await api<{csrf: string; user: User}>('/api/auth/accept-invite', {method: 'POST', body: JSON.stringify({token, name: data.name, password: data.password})});
-    setCsrf(result.csrf);
-    onSignedIn(result.user);
+    await signUp(invite!.email, data.password, {name: data.name.trim(), invite_token: token});
+    onSignedIn();
   });
 
   if (loadError) {
@@ -110,7 +125,7 @@ export function RecoveryPage({onDone, onBack}: {onDone(): void; onBack(): void})
   const {error, onSubmit} = useSubmit(async form => {
     const data = formValues(form);
     if (data.newPassword !== data.confirmPassword) throw Error('Новые пароли не совпадают.');
-    await api('/api/auth/recover', {method: 'POST', body: JSON.stringify(data)});
+    await rpc('recover_owner_password', {p_email: data.email, p_code: data.code, p_new_password: data.newPassword});
     onDone();
     toast('Пароль восстановлен.');
   });

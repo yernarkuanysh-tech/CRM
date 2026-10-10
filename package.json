@@ -1,7 +1,7 @@
 {
   "name": "granted-crm",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "engines": {
     "node": ">=24.0.0"
@@ -10,11 +10,12 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "start": "node --env-file-if-exists=.env server/index.mjs",
-    "test": "node --test tests/*.test.mjs && vitest run",
+    "start": "vite preview --host 127.0.0.1 --port 4173",
+    "test": "vitest run",
     "test:pdf": "vitest run --config vitest.pdf.config.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

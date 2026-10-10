@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {ModalProvider} from './components/feedback';
-import {api, errorMessage, setCsrf} from './lib/api';
+import {errorMessage, loadClients, rpc, supabase} from './lib/api';
 import {navigate, parseRoute, useHash} from './route';
 import {CrmProvider, type Session} from './state';
 import {ClientPage} from './pages/ClientPage';
@@ -9,7 +9,7 @@ import {IntegrationsPage} from './pages/IntegrationsPage';
 import {InvitePage, LoginPage, RecoveryPage} from './pages/AuthPages';
 import {SettingsPage} from './pages/SettingsPage';
 import {TasksPage} from './pages/TasksPage';
-import type {Client, Settings, User} from './types';
+import type {Client, Settings} from './types';
 
 type Phase =
   | {kind: 'loading'}
@@ -18,13 +18,6 @@ type Phase =
   | {kind: 'invite'; token: string}
   | {kind: 'recover'}
   | {kind: 'ready'; session: Session};
-
-interface AuthStatus {
-  initialized: boolean;
-  authenticated: boolean;
-  csrf?: string;
-  user: User | null;
-}
 
 const loginPhase = (initialized: boolean): Phase => {
   const invite = (location.hash || '').match(/^#invite\/(.+)$/);
@@ -36,21 +29,34 @@ export function App() {
 
   const start = useCallback(async () => {
     try {
-      const status = await api<AuthStatus>('/api/auth/status');
-      if (!status.authenticated) {
-        setPhase(loginPhase(status.initialized));
+      const {data: {session}} = await supabase.auth.getSession();
+      const settings = session && await rpc<Settings | null>('crm_settings');
+      if (!settings) {
+        // No session, or the account has no active CRM access (e.g. disabled by the owner).
+        if (session) await supabase.auth.signOut({scope: 'local'});
+        setPhase(loginPhase(await rpc<boolean>('crm_initialized')));
         return;
       }
-      setCsrf(status.csrf);
-      const settings = await api<Settings>('/api/settings');
-      const state = await api<{clients: Client[]; revision: number}>('/api/state');
-      setPhase({kind: 'ready', session: {user: status.user ?? settings.currentUser!, settings, clients: state.clients, revision: state.revision}});
+      const rows = await loadClients();
+      setPhase({kind: 'ready', session: {
+        user: settings.currentUser!, settings,
+        clients: rows.map(row => row.data as Client),
+        revisions: Object.fromEntries(rows.map(row => [row.id, row.revision])),
+      }});
     } catch (error) {
       setPhase({kind: 'error', message: errorMessage(error)});
     }
   }, []);
 
   useEffect(() => { start(); }, [start]);
+
+  // Signing out in another tab, or an expired refresh token, returns this tab to the login page.
+  useEffect(() => {
+    const {data} = supabase.auth.onAuthStateChange(event => {
+      if (event === 'SIGNED_OUT') setPhase(phase => phase.kind === 'ready' ? loginPhase(true) : phase);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const backToLogin = useCallback(() => {
     navigate('');

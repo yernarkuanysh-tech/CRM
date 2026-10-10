@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {api, errorMessage} from '../lib/api';
+import {check, downloadExport, errorMessage, supabase} from '../lib/api';
 import {allTasks, initials, PROTOTYPE_KEY} from '../lib/crm';
 import {isDueSoon, today} from '../lib/dates';
 import {useCrm} from '../state';
@@ -24,7 +24,7 @@ export function Shell({active = 'clients', children}: {active?: Section; childre
 
   async function logout() {
     try {
-      await api('/api/auth/logout', {method: 'POST'});
+      check(await supabase.auth.signOut({scope: 'local'}));
       signOut();
     } catch (error) {
       toast(errorMessage(error));
@@ -55,7 +55,7 @@ export function Shell({active = 'clients', children}: {active?: Section; childre
         </nav>
         <div className="mt-auto max-md:hidden">
           <button onClick={logout}>Выйти</button>
-          {owner && <a href="/api/export" className={quietLink}>Скачать резервную копию JSON</a>}
+          {owner && <a href="#" onClick={event => downloadExport(event).catch(error => toast(errorMessage(error)))} className={quietLink}>Скачать резервную копию JSON</a>}
           {owner && clients.length === 0 && <ImportButton />}
           <div className="border-t border-line px-12 py-16 leading-[1.7]">
             <small className="text-muted">Цикл поступления</small><br /><strong>{`Набор ${settings.year}`}</strong>

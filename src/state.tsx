@@ -1,6 +1,6 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction} from 'react';
 import {createPortal} from 'react-dom';
-import {api, errorMessage} from './lib/api';
+import {errorMessage, rpc} from './lib/api';
 import {useToast} from './components/feedback';
 import type {Client, Settings, User} from './types';
 
@@ -8,7 +8,8 @@ export interface Session {
   user: User;
   settings: Settings;
   clients: Client[];
-  revision: number;
+  /** Server revision of each client card, for optimistic concurrency. */
+  revisions: Record<string, number>;
 }
 
 export interface ListState {
@@ -25,7 +26,7 @@ interface CrmValue {
   setSettings: Dispatch<SetStateAction<Settings>>;
   clients: Client[];
   clientById(id?: string): Client | undefined;
-  /** Persists the full client list. Returns false (and shows the alert) when the server rejects it. */
+  /** Persists the full client list (only changed cards are sent). Returns false (and shows the alert) when the server rejects it. */
   save(next: Client[]): Promise<boolean>;
   /** Applies `recipe` to a copy of the client and saves. Errors thrown by `recipe` propagate. */
   updateClient(id: string, recipe: (draft: Client) => void): Promise<boolean>;
@@ -53,7 +54,7 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
   const [saveError, setSaveError] = useState('');
   const [list, setList] = useState<ListState>({query: '', level: '', stage: '', page: 1});
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-  const clientsRef = useRef(clients), revision = useRef(session.revision), savingRef = useRef(false);
+  const clientsRef = useRef(clients), revisions = useRef(session.revisions), savingRef = useRef(false);
 
   useEffect(() => {
     document.body.classList.toggle('saving', saving);
@@ -67,8 +68,17 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
     savingRef.current = true;
     setSaving(true);
     try {
-      const result = await api<{revision: number}>('/api/state', {method: 'PUT', body: JSON.stringify({clients: next, revision: revision.current})});
-      revision.current = result.revision;
+      const previous = new Map(clientsRef.current.map(c => [c.id, c])), kept = new Set(next.map(c => c.id));
+      const upserts = next
+        .filter(c => !previous.has(c.id) || JSON.stringify(previous.get(c.id)) !== JSON.stringify(c))
+        .map(c => ({data: c, revision: previous.has(c.id) ? revisions.current[c.id] : null}));
+      const deletes = [...previous.keys()].filter(id => !kept.has(id)).map(id => ({id, revision: revisions.current[id]}));
+      if (upserts.length || deletes.length) {
+        const saved = await rpc<Record<string, number>>('save_clients', {p_upserts: upserts, p_deletes: deletes});
+        const nextRevisions = {...revisions.current, ...saved};
+        for (const {id} of deletes) delete nextRevisions[id];
+        revisions.current = nextRevisions;
+      }
       clientsRef.current = next;
       setClients(next);
       setSaveError('');

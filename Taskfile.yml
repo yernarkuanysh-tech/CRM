@@ -5,4 +5,4 @@ tasks:
     cmd: docker build -t crm .
   
   run:
-    cmd: docker run -p 4173:4173 -e HOST=0.0.0.0 -e PORT=4173 -e APP_ORIGIN=http://127.0.0.1:4173 crm
+    cmd: docker run -p 4173:4173 crm

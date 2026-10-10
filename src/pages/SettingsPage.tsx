@@ -3,7 +3,7 @@ import {useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
 import {Avatar, Badge, card, cx, Empty, errorText, Heading, Notice, PasswordField, Person, PersonSmall, quietLink, SectionTop, subtle, TableWrap} from '../components/ui';
 import {rawValues} from '../forms/common';
-import {api, errorMessage} from '../lib/api';
+import {check, downloadExport, errorMessage, rpc, supabase} from '../lib/api';
 import {initials} from '../lib/crm';
 import {useCrm} from '../state';
 import type {Settings, Team} from '../types';
@@ -60,7 +60,7 @@ export function SettingsPage() {
         {owner && (
           <Section title="Данные и подключения">
             <p>Выгрузка содержит карточки, заявки, задачи и отчёты.</p>
-            <a className={quietLink} href="/api/export">Скачать JSON</a>
+            <ExportLink />
           </Section>
         )}
         {owner && <TeamSection />}
@@ -69,12 +69,16 @@ export function SettingsPage() {
   );
 }
 
+function ExportLink() {
+  const toast = useToast();
+  return <a className={quietLink} href="#" onClick={event => downloadExport(event).catch(error => toast(errorMessage(error)))}>Скачать JSON</a>;
+}
+
 function WorkspaceForm() {
   const {user, settings, setSettings, setUser} = useCrm();
   const toast = useToast();
   const {status, busy, onSubmit} = useSettingsForm('Сохранение…', async data => {
-    await api('/api/settings', {method: 'PUT', body: JSON.stringify({...data, year: Number(data.year)})});
-    const next = await api<Settings>('/api/settings');
+    const next = await rpc<Settings>('update_settings', {p_name: data.name, p_organization: data.organization, p_year: Number(data.year)});
     setSettings(next);
     if (next.currentUser) setUser(next.currentUser);
     toast('Настройки сохранены');
@@ -98,7 +102,12 @@ function AccountSection() {
   const toast = useToast();
   const {status, busy, onSubmit} = useSettingsForm('Сохранение…', async data => {
     if (data.newPassword !== data.confirmPassword) throw Error('Новые пароли не совпадают.');
-    await api('/api/auth/password', {method: 'POST', body: JSON.stringify(data)});
+    if (data.newPassword.length < 12) throw Error('Пароль должен содержать от 12 до 256 символов.');
+    const {error} = await supabase.auth.signInWithPassword({email: user.email, password: data.currentPassword});
+    if (error) throw Error(/invalid login/i.test(error.message) ? 'Неверный текущий пароль.' : errorMessage(error));
+    check(await supabase.auth.updateUser({password: data.newPassword}));
+    // End every session of this account, as the old server did after a password change.
+    check(await supabase.auth.signOut({scope: 'global'}));
     signOut();
     toast('Пароль изменён. Войдите заново.');
   });
@@ -122,10 +131,10 @@ function RecoverySection() {
   const {settings, setSettings} = useCrm();
   const [code, setCode] = useState('');
   const {status, busy, onSubmit} = useSettingsForm('Сохранение…', async (data, form) => {
-    const result = await api<{code: string}>('/api/auth/recovery-code', {method: 'POST', body: JSON.stringify(data)});
+    const code = await rpc<string>('create_recovery_code', {p_current_password: data.currentPassword});
     setSettings(s => ({...s, recoveryEnabled: true}));
     form.reset();
-    setCode(result.code);
+    setCode(code);
     return 'Новый код создан.';
   });
   return (
@@ -171,7 +180,7 @@ function TeamSection() {
 
   const loadTeam = useCallback(async () => {
     try {
-      applyTeam(await api<Team>('/api/team'));
+      applyTeam(await rpc<Team>('team_overview'));
     } catch (error) {
       setLoadError(errorMessage(error));
     }
@@ -180,7 +189,9 @@ function TeamSection() {
   useEffect(() => { loadTeam(); }, [loadTeam]);
 
   const {status, busy, onSubmit} = useSettingsForm('Отправка…', async (data, form) => {
-    const result = await api<InviteResult>('/api/team/invitations', {method: 'POST', body: JSON.stringify(data)});
+    const created = await rpc<{email: string; token: string}>('create_invitation', {p_email: data.email, p_name: data.name});
+    // Email delivery is not wired up yet: the owner sends the link manually.
+    const result: InviteResult = {email: created.email, inviteUrl: `${location.origin}${location.pathname}#invite/${created.token}`, sent: false};
     form.reset();
     setInvite(result);
     await loadTeam();
@@ -227,10 +238,10 @@ function TeamSection() {
 function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
   const toast = useToast();
   const [busy, setBusy] = useState('');
-  async function act(id: string, url: string, body: object, message: string) {
+  async function act(id: string, name: string, args: Record<string, unknown>, message: string) {
     setBusy(id);
     try {
-      onChange(await api<Team>(url, {method: 'POST', body: JSON.stringify(body)}));
+      onChange(await rpc<Team>(name, args));
       toast(message);
     } catch (error) {
       toast(errorMessage(error));
@@ -256,7 +267,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
                 <td><Badge tone={active ? 'green' : 'neutral'}>{active ? 'Активен' : 'Отключён'}</Badge></td>
                 <td>{formatInviteDate(member.createdAt)}</td>
                 <td className="text-right">
-                  <button disabled={busy === member.id} onClick={() => act(member.id, '/api/team/status', {id: member.id, status: active ? 'disabled' : 'active'}, active ? 'Доступ сотрудника отключён' : 'Доступ сотрудника включён')}>{active ? 'Отключить' : 'Включить'}</button>
+                  <button disabled={busy === member.id} onClick={() => act(member.id, 'set_staff_status', {p_id: member.id, p_status: active ? 'disabled' : 'active'}, active ? 'Доступ сотрудника отключён' : 'Доступ сотрудника включён')}>{active ? 'Отключить' : 'Включить'}</button>
                 </td>
               </tr>
             );
@@ -266,7 +277,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
               <td><Person avatar={<Avatar>…</Avatar>}><strong>{invite.name}</strong><PersonSmall className={small}>{invite.email}</PersonSmall></Person></td>
               <td><Badge tone="amber">Ожидает</Badge></td>
               <td>{`до ${formatInviteDate(invite.expires)}`}</td>
-              <td className="text-right"><button disabled={busy === invite.id} onClick={() => act(invite.id, '/api/team/invitations/revoke', {id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
+              <td className="text-right"><button disabled={busy === invite.id} onClick={() => act(invite.id, 'revoke_invitation', {p_id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
             </tr>
           ))}
           {!team.staff.length && !team.invitations.length && <tr><td colSpan={4}><Empty>Пока нет сотрудников. Отправьте первое приглашение.</Empty></td></tr>}
