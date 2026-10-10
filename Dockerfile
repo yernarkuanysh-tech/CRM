@@ -11,5 +11,5 @@ RUN npm run build
 FROM nginx:1.29-alpine
 COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
-ENV PORT=4173
-EXPOSE 4173
+ENV PORT=3000
+EXPOSE 3000

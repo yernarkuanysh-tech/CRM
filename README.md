@@ -41,12 +41,12 @@
 
 ## Публикация
 
-Нужен любой статический хостинг с HTTPS: соберите `npm run build` и опубликуйте папку `dist/`. Маршрутизация в адресе после `#`, поэтому дополнительных правил не требуется. Docker-образ (`Dockerfile`) собирает интерфейс и отдаёт его через nginx на порту `PORT` (по умолчанию 4173) — так CRM разворачивается на Railway из CI. Для VPS в PS.kz — [`deploy/pskz/README.md`](deploy/pskz/README.md). После публикации добавьте адрес сайта в **Site URL** и **Redirect URLs** в настройках Supabase Auth.
+Нужен любой статический хостинг с HTTPS: соберите `npm run build` и опубликуйте папку `dist/`. Маршрутизация в адресе после `#`, поэтому дополнительных правил не требуется. Docker-образ (`Dockerfile`) собирает интерфейс и отдаёт его через nginx на порту `PORT` (по умолчанию 3000) — так CRM разворачивается на Railway из CI. Для VPS в PS.kz — [`deploy/pskz/README.md`](deploy/pskz/README.md). После публикации добавьте адрес сайта в **Site URL** и **Redirect URLs** в настройках Supabase Auth.
 
 ## Разработка
 
 - `npm run dev` — Vite-сервер с горячей перезагрузкой на http://127.0.0.1:5173.
-- `npm run build` — проверка типов TypeScript и production-сборка в `dist/`; `npm start` — просмотр собранной версии на http://127.0.0.1:4173.
+- `npm run build` — проверка типов TypeScript и production-сборка в `dist/`; `npm start` — просмотр собранной версии на http://127.0.0.1:3000.
 - `npm run typecheck` — только проверка типов.
 - Изменения схемы — новым файлом в `supabase/migrations/`.
 
