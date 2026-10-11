@@ -259,14 +259,16 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
       <TableWrap className="max-md:-mx-16 max-md:rounded-none max-md:border-x-0">
         <thead><tr><th>Сотрудник</th><th>Статус</th><th>Добавлен</th><th className="text-right"></th></tr></thead>
         <tbody>
-          {team.staff.map(member => {
+          {team.members.map(member => {
             const active = member.status === 'active';
+            const owner = member.role === 'owner';
             return (
               <tr key={member.id}>
-                <td><Person avatar={<Avatar>{initials(member.name, /\s+/)}</Avatar>}><strong>{member.name}</strong><PersonSmall className={small}>{member.email}</PersonSmall></Person></td>
+                <td><Person avatar={<Avatar>{initials(member.name, /\s+/)}</Avatar>}><strong>{member.name}</strong><PersonSmall className={small}>{`${owner ? 'Владелец' : 'Сотрудник'} · ${member.email}`}</PersonSmall></Person></td>
                 <td><Badge tone={active ? 'green' : 'neutral'}>{active ? 'Активен' : 'Отключён'}</Badge></td>
                 <td>{formatInviteDate(member.createdAt)}</td>
-                <td className="text-right">
+                <td className="text-right whitespace-nowrap">
+                  <button disabled={busy === member.id} onClick={() => act(member.id, 'set_member_role', {p_id: member.id, p_role: owner ? 'staff' : 'owner'}, owner ? 'Права владельца сняты' : 'Сотрудник назначен владельцем')}>{owner ? 'Сделать сотрудником' : 'Сделать владельцем'}</button>{' '}
                   <button disabled={busy === member.id} onClick={() => act(member.id, 'set_staff_status', {p_id: member.id, p_status: active ? 'disabled' : 'active'}, active ? 'Доступ сотрудника отключён' : 'Доступ сотрудника включён')}>{active ? 'Отключить' : 'Включить'}</button>
                 </td>
               </tr>
@@ -280,7 +282,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
               <td className="text-right"><button disabled={busy === invite.id} onClick={() => act(invite.id, 'revoke_invitation', {p_id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
             </tr>
           ))}
-          {!team.staff.length && !team.invitations.length && <tr><td colSpan={4}><Empty>Пока нет сотрудников. Отправьте первое приглашение.</Empty></td></tr>}
+          {!team.members.length && !team.invitations.length && <tr><td colSpan={4}><Empty>Пока нет сотрудников. Отправьте первое приглашение.</Empty></td></tr>}
         </tbody>
       </TableWrap>
     </>

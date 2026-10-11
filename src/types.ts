@@ -129,10 +129,11 @@ export interface Settings {
   teamCount: number;
 }
 
-export interface StaffMember {
+export interface TeamMember {
   id: string;
   email: string;
   name: string;
+  role: Role;
   status: 'active' | 'disabled';
   createdAt: string;
 }
@@ -150,6 +151,6 @@ export interface Team {
   limit: number;
   used: number;
   mailConfigured: boolean;
-  staff: StaffMember[];
+  members: TeamMember[];
   invitations: Invitation[];
 }
