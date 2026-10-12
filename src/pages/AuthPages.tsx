@@ -14,7 +14,7 @@ async function signUp(email: string, password: string, data: Record<string, stri
 
 function AuthCard({className = '', children}: {className?: string; children: ReactNode}) {
   return (
-    <main className={`mx-auto my-[8vh] w-[min(440px,calc(100vw-32px))] rounded-[12px] border border-line bg-canvas p-32 shadow-login max-md:my-24 max-md:p-25 ${className}`}>
+    <main className={`glass mx-auto my-[8vh] w-[min(440px,calc(100vw-32px))] rounded-[24px] p-34 shadow-login max-md:my-24 max-md:p-25 ${className}`}>
       <div className="mb-34"><BrandLogo organization="GrantEd" large /></div>
       {children}
     </main>

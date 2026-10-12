@@ -4,7 +4,7 @@ import type {AppStatus} from '../types';
 export const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(' ');
 
 export const subtle = 'text-[12px] tracking-[.015em] text-muted';
-export const card = 'rounded-[8px] border border-line bg-white shadow-card';
+export const card = 'apple-card rounded-[18px] border border-line bg-white shadow-card';
 export const localNote = 'mt-19 text-[11px] leading-[1.6] tracking-[.015em] text-muted max-md:max-w-[70ch]';
 export const quietLink = 'mt-18 inline-block text-[12px] text-link';
 export const errorText = 'text-[12px] text-danger';
@@ -37,7 +37,7 @@ export function Icon({name, className}: {name: IconName; className?: string}) {
 export function BrandLogo({organization, compact = false, large = false}: {organization: string; compact?: boolean; large?: boolean}) {
   return (
     <span className="inline-flex min-w-0 items-center gap-11">
-      <span className={cx('grid flex-none place-items-center overflow-hidden rounded-[6px] border border-line bg-white shadow-mark', large ? 'size-46 p-5' : 'size-38 p-4 max-md:size-34')} aria-hidden="true">
+      <span className={cx('grid flex-none place-items-center overflow-hidden rounded-[12px] border border-white/90 bg-white shadow-mark', large ? 'size-48 p-6' : 'size-40 p-5 max-md:size-36')} aria-hidden="true">
         <img className="brand-logo-image block size-full object-contain" src="/granted-logo-mark.jpg" width="132" height="161" alt="" />
       </span>
       {!compact && (
@@ -50,7 +50,7 @@ export function BrandLogo({organization, compact = false, large = false}: {organ
   );
 }
 
-const avatarTones = ['bg-tint text-ink', 'bg-[#e9f2ee] text-[#38705b]', 'bg-[#f7eee4] text-[#8a6241]', 'bg-[#edeaf4] text-[#6b5688]'];
+const avatarTones = ['bg-[#e8f2ff] text-[#0066cc]', 'bg-[#e8f7ef] text-[#207a4d]', 'bg-[#fff2df] text-[#956114]', 'bg-[#f0ebff] text-[#7357b5]'];
 
 export function Avatar({children, tone = 0, className = 'size-35 text-[12px]'}: {children: ReactNode; tone?: number; className?: string}) {
   return <span className={cx('grid shrink-0 place-items-center rounded-full font-semibold', avatarTones[tone % 4], className)}>{children}</span>;
@@ -75,13 +75,13 @@ const statusTone = (s: AppStatus): BadgeTone => s === 'Оффер' ? 'green' : s
 export const StatusBadge = ({status}: {status: AppStatus}) => <Badge tone={statusTone(status)}>{status}</Badge>;
 
 export function Empty({children}: {children: ReactNode}) {
-  return <div className="rounded-[8px] border border-dashed border-control bg-canvas px-22 py-42 text-center leading-[1.7] text-muted">{children}</div>;
+  return <div className="rounded-[18px] border border-dashed border-control bg-white/60 px-22 py-42 text-center leading-[1.7] text-muted">{children}</div>;
 }
 
 export const EmptyTitle = ({children}: {children: ReactNode}) => <h3 className="text-ink">{children}</h3>;
 
 export function Notice({children, className}: {children: ReactNode; className?: string}) {
-  return <div className={cx('mb-20 rounded-[7px] bg-canvas px-16 py-13 text-[12px] leading-[1.6] text-ink-soft', className)}>{children}</div>;
+  return <div className={cx('mb-20 rounded-[14px] border border-[#0071e318] bg-[#eaf4ff] px-16 py-13 text-[12px] leading-[1.6] text-ink-soft', className)}>{children}</div>;
 }
 
 export function SectionTop({children, margin = 'mb-17'}: {children: ReactNode; margin?: string}) {
@@ -99,7 +99,7 @@ export function TableWrap({children, className}: {children: ReactNode; className
 export function Heading({title, text, avatar, children}: {title: ReactNode; text?: ReactNode; avatar?: ReactNode; children?: ReactNode}) {
   const copy = (
     <div>
-      <h1 className="m-0 mb-7 text-[32px] leading-[40px] font-semibold tracking-[-.04em] text-ink max-md:text-[28px] max-md:leading-[34px]">{title}</h1>
+      <h1 className="m-0 mb-7 text-[36px] leading-[42px] font-[650] tracking-[-.045em] text-ink max-md:text-[30px] max-md:leading-[36px]">{title}</h1>
       {text !== undefined && <p className="m-0 leading-[1.5] text-ink-soft max-md:text-[12px]">{text}</p>}
     </div>
   );

@@ -65,7 +65,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
         </BtnRow>
       </Heading>
       <div className={cx('grid gap-28', reportLayout ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[245px_minmax(0,1fr)] max-xl:grid-cols-[215px_1fr] max-md:grid-cols-[1fr]')}>
-        <aside className={cx('h-fit p-20 max-md:hidden', card, reportLayout && 'hidden')}>
+        <aside className={cx('sticky top-92 h-fit p-20 max-md:hidden', card, reportLayout && 'hidden')}>
           <h2 className="mb-24">Об абитуриенте</h2>
           <dl>
             {profile.map(([label, value]) => (
@@ -79,13 +79,13 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
           <p className={localNote}>{(c.demo ? 'Демонстрационный абитуриент. ' : '') + 'Данные сохраняются в базе.'}</p>
         </aside>
         <section>
-          <nav className="mb-23 flex gap-8 overflow-auto border-b border-line pb-8 max-md:gap-4" aria-label="Разделы карточки">
+          <nav className="mb-24 flex gap-4 overflow-auto rounded-[14px] bg-[#e8e8ed] p-4 max-md:-mx-4" aria-label="Разделы карточки">
             {tabs.map(([key, label, count]) => (
               <a
                 key={key}
                 href={`#client/${c.id}/${key}`}
                 aria-current={tab === key ? 'page' : undefined}
-                className={cx('rounded-full border px-13 py-7 text-[13px] whitespace-nowrap hover:no-underline max-md:px-11', tab === key ? 'border-ink border-b-2 bg-ink font-medium text-white' : 'border-transparent text-muted hover:bg-tint')}
+                className={cx('rounded-[10px] border px-13 py-7 text-[13px] whitespace-nowrap hover:no-underline max-md:px-11', tab === key ? 'border-white bg-white font-medium text-ink shadow-[0_1px_3px_#0000001a]' : 'border-transparent text-muted hover:bg-white/55')}
               >
                 {count !== '' ? <>{label + ' '}<span className={subtle}>{count}</span></> : label}
               </a>
@@ -125,14 +125,14 @@ function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): 
       <dl className={cx('mx-0 mt-0 mb-24 overflow-hidden', card)}>
         {[...fields, ['Целевые университеты', null] as const].map(([label, value]) => (
           <div key={label} className={row}>
-            <dt className={cx(cell, 'bg-white text-muted max-sm:pb-6')}>{label}</dt>
+            <dt className={cx(cell, 'bg-[#f8f8fa] text-muted max-sm:pb-6')}>{label}</dt>
             <dd className={cx(cell, 'font-medium max-sm:pt-8')}>
               {value !== null ? value || 'Не указано' : <a className="text-link" href={`#client/${c.id}/applications`}>{c.apps.length ? universities : 'Добавить университеты в разделе «Заявки»'}</a>}
             </dd>
           </div>
         ))}
         <div className={row}>
-          <dt className={cx(cell, 'bg-white text-muted max-sm:pb-6')}>Папка Google Drive</dt>
+          <dt className={cx(cell, 'bg-[#f8f8fa] text-muted max-sm:pb-6')}>Папка Google Drive</dt>
           <dd className={cx(cell, 'font-medium max-sm:pt-8')}>
             {googleDriveUrl(c.googleDriveUrl)
               ? <a className="text-link" href={googleDriveUrl(c.googleDriveUrl)} target="_blank" rel="noopener noreferrer">Открыть папку</a>

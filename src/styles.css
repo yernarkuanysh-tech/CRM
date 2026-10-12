@@ -8,16 +8,16 @@
   --color-*: initial;
   --color-white: #fff;
   --color-black: #000;
-  --color-ink: #171717;
-  --color-ink-soft: #4d4d4d;
-  --color-muted: #666;
-  --color-faint: #888;
-  --color-line: #ebebeb;
-  --color-control: #dedede;
-  --color-canvas: #fafafa;
-  --color-tint: #f5f5f5;
-  --color-link: #0070f3;
-  --color-danger: #ee0000;
+  --color-ink: #1d1d1f;
+  --color-ink-soft: #3a3a3c;
+  --color-muted: #6e6e73;
+  --color-faint: #8e8e93;
+  --color-line: #d9d9de;
+  --color-control: #c7c7cc;
+  --color-canvas: #f5f5f7;
+  --color-tint: #eeeef0;
+  --color-link: #0071e3;
+  --color-danger: #d70015;
   --color-warning: #ab570a;
   --color-warning-bg: #ffefcf;
 
@@ -31,15 +31,15 @@
   --breakpoint-xl: 1200px;
   --breakpoint-2xl: 1500px;
 
-  --font-sans: Inter, Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --shadow-card: inset 0 0 0 1px #00000003, 0 1px 1px #00000005, 0 2px 2px #00000008;
-  --shadow-stats: inset 0 0 0 1px #00000005, 0 1px 1px #00000005, 0 2px 2px #00000008;
-  --shadow-login: inset 0 0 0 1px #00000003, 0 2px 2px #00000008, 0 8px 16px -8px #0000000a;
-  --shadow-dialog: 0 1px 1px #00000005, 0 8px 16px -4px #0000000a, 0 24px 32px -8px #0000000f;
-  --shadow-toast: 0 1px 1px #00000005, 0 8px 16px -4px #00000012, 0 24px 32px -8px #00000018;
-  --shadow-mark: 0 1px 1px #00000005;
+  --shadow-card: inset 0 1px 0 #ffffff, 0 1px 2px #00000008, 0 8px 24px #00000008;
+  --shadow-stats: inset 0 1px 0 #ffffff, 0 1px 2px #00000008, 0 10px 30px #0000000a;
+  --shadow-login: inset 0 1px 0 #ffffff, 0 2px 8px #0000000a, 0 28px 70px #00000012;
+  --shadow-dialog: inset 0 1px 0 #ffffffcc, 0 12px 35px #0000001a, 0 40px 100px #00000021;
+  --shadow-toast: inset 0 1px 0 #ffffff80, 0 12px 30px #00000024;
+  --shadow-mark: inset 0 1px 0 #ffffff, 0 2px 8px #0000000d;
 
   --animate-appear: appear .16s ease-out;
   @keyframes appear {
@@ -49,13 +49,13 @@
 }
 
 @utility primary {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
+  background: var(--color-link);
+  border-color: var(--color-link);
   color: var(--color-white);
-  box-shadow: 0 1px 1px #0000000a;
+  box-shadow: inset 0 1px 0 #ffffff38, 0 1px 2px #0058b233, 0 6px 16px #0071e329;
   &:hover:not(:disabled) {
-    background: #333;
-    border-color: #333;
+    background: #0077ed;
+    border-color: #0077ed;
   }
 }
 
@@ -63,67 +63,77 @@
   :root {
     color-scheme: light;
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "ss02";
+    font-feature-settings: "kern", "liga", "calt";
     font-size: 14px;
     color: var(--color-ink);
     background: var(--color-canvas);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--color-canvas); }
-  ::selection { background: #171717; color: #f2f2f2; }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background:
+      radial-gradient(circle at 78% -10%, #ffffff 0, #ffffff00 34rem),
+      var(--color-canvas);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #0071e326; color: var(--color-ink); }
 
   button, input, select, textarea { font: inherit; touch-action: manipulation; }
   a { touch-action: manipulation; color: var(--color-ink); text-decoration: none; }
-  button, a { -webkit-tap-highlight-color: #dce7ff; }
+  button, a { -webkit-tap-highlight-color: #0071e322; }
   a:hover { text-decoration: underline; text-underline-offset: 3px; }
-  :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
+  :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #0071e34d; outline-offset: 2px; }
 
   button {
     cursor: pointer;
-    min-height: 40px;
-    border: 1px solid var(--color-control);
-    border-radius: 6px;
-    padding: 9px 14px;
-    background: var(--color-white);
+    min-height: 42px;
+    border: 1px solid #0000001a;
+    border-radius: 11px;
+    padding: 9px 15px;
+    background: #ffffffd9;
     color: var(--color-ink);
     font-weight: 500;
     letter-spacing: -.01em;
-    box-shadow: 0 1px 1px #00000005, 0 2px 2px #00000008;
+    box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px #0000000a;
   }
-  button:hover:not(:disabled) { background: var(--color-tint); border-color: #cfcfcf; }
+  button:hover:not(:disabled) { background: #fff; border-color: #0000002e; }
+  button:active:not(:disabled) { transform: scale(.98); filter: brightness(.98); }
   button:disabled { opacity: .5; cursor: default; }
 
   input, select, textarea {
     min-width: 0;
-    min-height: 40px;
-    border: 1px solid var(--color-control);
-    border-radius: 6px;
-    padding: 10px 11px;
-    background: var(--color-white);
+    min-height: 42px;
+    border: 1px solid #0000001f;
+    border-radius: 11px;
+    padding: 10px 12px;
+    background: #ffffffd9;
     color: var(--color-ink);
-    box-shadow: 0 1px 2px #00000008;
+    box-shadow: inset 0 1px 2px #00000008, 0 1px 0 #ffffff;
   }
+  :is(input, select, textarea):focus { border-color: #0071e380; background: #fff; box-shadow: 0 0 0 3px #0071e31a; outline: none; }
   input::placeholder { color: var(--color-faint); }
   select { max-width: 100%; }
 
-  h2 { font-size: 16px; font-weight: 600; margin: 0; }
-  h3 { font-size: 14px; margin: 0 0 8px; }
+  h2 { font-size: 17px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
+  h3 { font-size: 14px; font-weight: 650; letter-spacing: -.01em; margin: 0 0 8px; }
 
   table { border-collapse: collapse; width: 100%; text-align: left; white-space: nowrap; background: var(--color-white); }
   th {
-    background: var(--color-canvas);
+    background: #f8f8fa;
     border-bottom: 1px solid var(--color-line);
     padding: 12px 14px;
     color: var(--color-muted);
-    font-family: var(--font-mono);
     font-size: 11px;
-    font-weight: 400;
-    letter-spacing: .025em;
+    font-weight: 600;
+    letter-spacing: .015em;
     text-transform: uppercase;
   }
-  td { border-bottom: 1px solid var(--color-line); padding: 15px 14px; color: var(--color-ink); font-size: 14px; }
+  td { border-bottom: 1px solid #e5e5e8; padding: 16px 14px; color: var(--color-ink); font-size: 14px; }
   tr:last-child td { border-bottom: 0; }
-  tbody tr:hover { background: var(--color-canvas); }
+  tbody tr { transition: background-color .16s ease; }
+  tbody tr:hover { background: #0071e308; }
   @media (min-width: 1500px) {
     td { padding-top: 18px; padding-bottom: 18px; }
   }
@@ -133,11 +143,19 @@
   form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 
   @media (prefers-reduced-motion: no-preference) {
-    button, a { transition: background .12s, color .12s; }
+    button, a, input, select, textarea { transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease, transform .12s ease, filter .12s ease; }
   }
 }
 
 @layer components {
+  .glass {
+    background: #ffffffb8;
+    border: 1px solid #ffffffa8;
+    box-shadow: inset 0 1px 0 #ffffff, 0 10px 35px #0000000a;
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+  }
+  .apple-card { background: #ffffffed; border-color: #00000010; }
   body.saving :is(#app, #modal) { pointer-events: none; opacity: .75; }
 
   /* Paragraphs inside modal bodies share one muted reading style. */
@@ -184,4 +202,18 @@
     .printing-report .report-section, .printing-report .report-action, .printing-report .report-footer { break-inside: avoid; }
     .printing-report .report-paper h1, .printing-report .report-paper h2 { break-after: avoid; }
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  button:active:not(:disabled) { transform: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: #f8f8fa; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --color-line: #9a9aa0; --color-muted: #414145; }
+  .glass, .apple-card { border-color: #7a7a80; }
 }

@@ -18,7 +18,7 @@ export function ClientsPage() {
         <button className="primary" onClick={() => modal.open('Новый абитуриент', <ClientForm />)}><Icon name="plus" /> Добавить абитуриента</button>
       </Heading>
       <Stats />
-      <div className="grid grid-cols-[minmax(0,1fr)_270px] gap-32 max-xl:grid-cols-[1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)_290px] gap-28 max-xl:grid-cols-[1fr]">
         <section>
           <SectionTop>
             <h2>База абитуриентов <span className={cx(subtle, 'ml-6')}>{clients.length}</span></h2>
@@ -27,7 +27,7 @@ export function ClientsPage() {
           <ClientTable />
           <p className={localNote}>Изменения сохраняются в базе данных.</p>
         </section>
-        <aside className="border-l border-line pl-24 max-xl:hidden">
+        <aside className="apple-card h-fit rounded-[18px] border border-line bg-white p-20 shadow-card max-xl:hidden">
           <h2 className="mt-2 mb-7">Требуют внимания</h2>
           <span className={subtle}>Ближайшие задачи</span>
           {deadlines.map(t => {
@@ -57,11 +57,11 @@ function Stats() {
     ['Задачи на 7 дней', allTasks(clients).filter(t => !t.done && isDueSoon(t.date)).length, 'включая просроченные', 'clock'],
   ];
   return (
-    <div className="mb-28 grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-[8px] border border-line bg-white shadow-stats max-md:grid-cols-[1fr_1fr]">
+    <div className="mb-30 grid grid-cols-[repeat(4,1fr)] gap-12 max-md:grid-cols-[1fr_1fr] max-sm:grid-cols-[1fr]">
       {stats.map(([label, number, caption, icon], i) => (
-        <div key={label} className={cx('relative px-23 py-20 max-md:p-17', i > 0 && 'border-l border-line', i === 2 && 'max-md:border-t max-md:border-l-0', i === 3 && 'max-md:border-t')}>
+        <div key={label} className="apple-card relative min-h-136 rounded-[18px] border border-line bg-white px-22 py-20 shadow-stats max-md:p-17">
           <div className="text-[12px] tracking-[.015em] text-muted">{label}</div>
-          <Icon name={icon} className="absolute top-20 right-22 text-faint max-md:top-15 max-md:right-16" />
+          <span className={cx('absolute top-16 right-16 grid size-34 place-items-center rounded-full', i === 0 ? 'bg-[#e8f2ff] text-link' : 'bg-tint text-muted')}><Icon name={icon} /></span>
           <div className="mt-10 mb-6 text-[30px] font-semibold tracking-[-.035em] text-ink tabular-nums max-md:text-[26px]">{number}</div>
           <small className="text-[11px] tracking-[.015em] text-muted">{caption}</small>
         </div>
@@ -116,7 +116,7 @@ function ClientTable() {
                 <td>
                   {`${sent} из ${c.apps.length}`}
                   <div className="mt-7 h-4 w-70 overflow-hidden rounded-[4px] bg-line" aria-label={`${sent} из ${c.apps.length} заявок отправлено`}>
-                    <span className="block h-full bg-ink" style={{width: `${c.apps.length ? sent / c.apps.length * 100 : 0}%`}} />
+                    <span className="block h-full rounded-full bg-link" style={{width: `${c.apps.length ? sent / c.apps.length * 100 : 0}%`}} />
                   </div>
                 </td>
                 <td><StatusBadge status={clientStatus(c)} /></td>

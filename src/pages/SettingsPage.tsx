@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useState, type FormEvent, type ReactNode} from 'react';
 import {useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
-import {Avatar, Badge, card, cx, Empty, errorText, Heading, Notice, PasswordField, Person, PersonSmall, quietLink, SectionTop, subtle, TableWrap} from '../components/ui';
+import {Avatar, Badge, card, cx, Empty, errorText, Heading, Icon, Notice, PasswordField, Person, PersonSmall, subtle, TableWrap, type IconName} from '../components/ui';
 import {rawValues} from '../forms/common';
 import {check, downloadExport, errorMessage, FunctionUnavailableError, invokeFunction, rpc, supabase} from '../lib/api';
 import {initials} from '../lib/crm';
@@ -9,7 +9,7 @@ import {useCrm} from '../state';
 import type {Settings, Team} from '../types';
 
 const field = 'my-16 block';
-const formStatus = 'min-h-20 text-[#9c2020]';
+const formStatus = 'min-h-20 text-[12px] text-muted';
 const formatInviteDate = (value: string | number) => new Date(value).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short', year: 'numeric'});
 
 /** Settings form: disables its button while `action` runs and reports progress or errors in a status line. */
@@ -32,10 +32,15 @@ function useSettingsForm(pending: string, action: (data: Record<string, string>,
   return {status, busy, onSubmit};
 }
 
-function Section({title, className, children}: {title?: string; className?: string; children: ReactNode}) {
+function Section({title, text, icon = 'grid', className, children}: {title?: string; text?: string; icon?: IconName; className?: string; children: ReactNode}) {
   return (
-    <section className={cx('p-24', card, className)}>
-      {title && <h2 className="mb-16">{title}</h2>}
+    <section className={cx('p-24 max-sm:p-19', card, className)}>
+      {title && (
+        <div className="mb-22 flex items-start gap-13">
+          <span className="grid size-38 shrink-0 place-items-center rounded-[12px] bg-[#e8f2ff] text-link"><Icon name={icon} /></span>
+          <div><h2 className="mt-1 mb-4">{title}</h2>{text && <p className="m-0 text-[12px] leading-[1.5] text-muted">{text}</p>}</div>
+        </div>
+      )}
       {children}
     </section>
   );
@@ -47,9 +52,20 @@ export function SettingsPage() {
   return (
     <Shell active="settings">
       <Heading title="Настройки" text="Рабочее пространство, команда и безопасность входа." />
-      <div className="grid max-w-1050 grid-cols-2 gap-24 max-lg:grid-cols-[1fr]">
+      <div className={cx('mb-18 grid max-w-1180 grid-cols-3 overflow-hidden', card, 'max-md:grid-cols-[1fr]')}>
+        {[
+          ['Роль', owner ? 'Владелец' : 'Сотрудник'],
+          ['Команда', `${settings.teamCount || 0} из 10`],
+          ['Текущий набор', String(settings.year)],
+        ].map(([label, value], index) => (
+          <div key={label} className={cx('px-22 py-17', index > 0 && 'border-l border-line max-md:border-l-0 max-md:border-t')}>
+            <span className="block text-[11px] text-muted">{label}</span><strong className="mt-5 block text-[17px] tracking-[-.02em]">{value}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="grid max-w-1180 grid-cols-2 gap-18 max-lg:grid-cols-[1fr]">
         {owner ? <WorkspaceForm /> : (
-          <Section title="Рабочее пространство">
+          <Section title="Рабочее пространство" text="Основные параметры вашей CRM." icon="grid">
             <p><strong>{settings.organization}</strong></p>
             <p>{`Цикл поступления: набор ${settings.year}`}</p>
             <p className={cx(subtle, 'leading-[1.6]')}>Основные настройки меняет владелец.</p>
@@ -58,8 +74,8 @@ export function SettingsPage() {
         <AccountSection />
         {owner && <RecoverySection />}
         {owner && (
-          <Section title="Данные и подключения">
-            <p>Выгрузка содержит карточки, заявки, задачи и отчёты.</p>
+          <Section title="Данные и экспорт" text="Резервная копия рабочего пространства." icon="file">
+            <p className="mt-0 leading-[1.6] text-ink-soft">Выгрузка содержит карточки абитуриентов, заявки, задачи и отчёты.</p>
             <ExportLink />
           </Section>
         )}
@@ -71,7 +87,7 @@ export function SettingsPage() {
 
 function ExportLink() {
   const toast = useToast();
-  return <a className={quietLink} href="#" onClick={event => downloadExport(event).catch(error => toast(errorMessage(error)))}>Скачать JSON</a>;
+  return <a className="mt-8 inline-flex min-h-42 items-center gap-8 rounded-[11px] border border-[#0000001a] bg-white px-15 py-9 font-medium text-ink shadow-[0_1px_2px_#0000000a] hover:no-underline" href="#" onClick={event => downloadExport(event).catch(error => toast(errorMessage(error)))}><Icon name="file" /> Скачать JSON</a>;
 }
 
 function WorkspaceForm() {
@@ -84,7 +100,7 @@ function WorkspaceForm() {
     toast('Настройки сохранены');
   });
   return (
-    <Section title="Рабочее пространство">
+    <Section title="Рабочее пространство" text="Название, владелец и цикл поступления." icon="grid">
       <form onSubmit={onSubmit}>
         <label className={field}>Имя владельца<input name="name" required maxLength={100} defaultValue={settings.name || user.name || ''} /></label>
         <label className={field}>Название организации<input name="organization" required maxLength={100} defaultValue={settings.organization} /></label>
@@ -112,9 +128,11 @@ function AccountSection() {
     toast('Пароль изменён. Войдите заново.');
   });
   return (
-    <Section title="Ваш вход">
-      <p>{user.name || ''}</p>
-      <p>Почта: <strong>{user.email || ''}</strong></p>
+    <Section title="Ваш вход" text="Личная учётная запись и пароль." icon="people">
+      <div className="mb-22 flex items-center gap-12 rounded-[14px] bg-[#f8f8fa] p-14">
+        <Avatar className="size-42 text-[14px]">{initials(user.name || user.email || 'U', /\s+/)}</Avatar>
+        <div><strong className="block">{user.name || 'Пользователь'}</strong><span className="mt-3 block text-[12px] text-muted">{user.email || ''}</span></div>
+      </div>
       <form onSubmit={onSubmit}>
         <PasswordField className={field} name="currentPassword" label="Текущий пароль" />
         <PasswordField className={field} name="newPassword" label="Новый пароль — минимум 12 символов" />
@@ -138,8 +156,11 @@ function RecoverySection() {
     return 'Новый код создан.';
   });
   return (
-    <Section title="Восстановление владельца">
-      <p>{`${settings.recoveryEnabled ? 'Резервный код создан.' : 'Резервный код пока не создан.'} Храните его отдельно от CRM.`}</p>
+    <Section title="Восстановление доступа" text="Резервный код владельца CRM." icon="check">
+      <div className="mb-18 flex items-center justify-between gap-12 rounded-[14px] bg-[#f8f8fa] px-14 py-12">
+        <span className="text-[12px] text-ink-soft">{settings.recoveryEnabled ? 'Резервный код настроен' : 'Резервный код не создан'}</span>
+        <Badge tone={settings.recoveryEnabled ? 'green' : 'amber'}>{settings.recoveryEnabled ? 'Защищено' : 'Требует настройки'}</Badge>
+      </div>
       <form onSubmit={onSubmit}>
         <PasswordField className={field} name="currentPassword" label="Текущий пароль" />
         <p className={subtle}>Новый код отменяет предыдущий и показывается один раз.</p>
@@ -215,12 +236,11 @@ function TeamSection() {
   }
 
   return (
-    <Section className="col-span-full">
-      <SectionTop><div><h2 className="mb-16">Команда</h2><p className={subtle}>До 10 сотрудников с личным входом.</p></div></SectionTop>
-      <form className="mt-20 mb-24 grid grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_auto] items-end gap-12 max-md:grid-cols-[1fr]" onSubmit={onSubmit}>
+    <Section className="col-span-full" title="Команда" text="Приглашайте сотрудников и управляйте их доступом." icon="people">
+      <form className="mb-24 grid grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_auto] items-end gap-12 rounded-[16px] bg-[#f8f8fa] p-18 max-md:grid-cols-[1fr]" onSubmit={onSubmit}>
         <label className="m-0">Имя сотрудника<input name="name" required maxLength={100} placeholder="Имя и фамилия" /></label>
         <label className="m-0">Рабочая почта<input name="email" type="email" required maxLength={254} placeholder="name@company.kz" /></label>
-        <button className="primary h-40" disabled={busy}>Отправить приглашение</button>
+        <button className="primary h-42" disabled={busy}>Отправить приглашение</button>
         <p className={cx(formStatus, 'col-span-full m-0 max-md:col-auto')} role="status">{status}</p>
       </form>
       <div id="invite-result">
@@ -263,6 +283,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
         <strong className="text-[22px] tracking-[-.03em]">{`${team.used} из ${team.limit}`}</strong>
         <span className="text-[12px] text-muted">мест занято активными сотрудниками и приглашениями</span>
       </div>
+      <div className="mb-18 h-6 overflow-hidden rounded-full bg-tint" aria-label={`${team.used} из ${team.limit} мест занято`}><span className="block h-full rounded-full bg-link" style={{width: `${Math.min(100, team.used / team.limit * 100)}%`}} /></div>
       <TableWrap className="max-md:-mx-16 max-md:rounded-none max-md:border-x-0">
         <thead><tr><th>Сотрудник</th><th>Статус</th><th>Добавлен</th><th className="text-right"></th></tr></thead>
         <tbody>
