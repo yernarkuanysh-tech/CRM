@@ -17,7 +17,7 @@ export function TaskForm({client}: {client?: Client}) {
   });
   return (
     <form id="task-form" onSubmit={onSubmit}>
-      {!client && <label>Клиент<select name="client">{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+      {!client && <label>Абитуриент<select name="client">{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
       <label>Что нужно сделать<input name="title" required maxLength={250} placeholder="Проверить мотивационное письмо" /></label>
       <label>Срок<input name="date" type="date" required defaultValue={dateAt(1)} /></label>
       <FormFooter label="Добавить задачу" error={error} onCancel={modal.close} />

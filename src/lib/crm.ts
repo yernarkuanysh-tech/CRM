@@ -5,7 +5,7 @@ export const levels: Level[] = ['Бакалавриат', 'Магистрату�
 export const statuses: AppStatus[] = ['Подбор программы', 'Документы', 'Подана', 'Интервью', 'Оффер', 'Отказ'];
 export const clientStages: AppStatus[] = ['Документы', 'Подана', 'Интервью', 'Оффер'];
 export const currencies: Currency[] = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'KZT'];
-export const feeLabels: Record<FeeStatus, string> = {unknown: 'Не указан', unpaid: 'Не оплачен', paid: 'Оплачен клиентом', waived: 'Без сбора / waiver'};
+export const feeLabels: Record<FeeStatus, string> = {unknown: 'Не указан', unpaid: 'Не оплачен', paid: 'Оплачен абитуриентом', waived: 'Без сбора / waiver'};
 export const semesters = ['Не указан', 'Fall', 'Spring', 'Summer', 'Winter'];
 export const exams = ['Не уточнено', 'Нет', 'GRE', 'GMAT', 'GRE или GMAT', 'GRE и GMAT'];
 export const PROTOTYPE_KEY = 'admissions-crm-demo-v1';
@@ -35,6 +35,16 @@ export const allTasks = (clients: Client[]): TaskWithClient[] => clients.flatMap
 
 export const initials = (name: string, separator: string | RegExp = ' ') => name.split(separator).map(v => v[0]).slice(0, 2).join('');
 
+export function googleDriveUrl(value: string | undefined) {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && ['drive.google.com', 'docs.google.com'].includes(url.hostname) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 
 export function money(amount: number, currency: string) {
   return new Intl.NumberFormat('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(amount) + ' ' + currency;
@@ -52,7 +62,7 @@ export function validateFee(data: FeeInput) {
   if (!Object.hasOwn(feeLabels, status) || !currencies.includes(currency as Currency)) throw new Error('Выберите статус оплаты и валюту из списка.');
   let amount = data.feeAmount === '' || data.feeAmount == null ? null : Number(data.feeAmount);
   if (amount !== null && (!Number.isFinite(amount) || amount < 0 || amount > 10000000 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.000001)) throw new Error('Укажите неотрицательную сумму с максимум двумя знаками после запятой.');
-  if (status === 'paid' && amount === null) throw new Error('Укажите сумму, которую оплатил клиент.');
+  if (status === 'paid' && amount === null) throw new Error('Укажите сумму, которую оплатил абитуриент.');
   if (status === 'waived') amount = 0;
   const paidDate = status === 'paid' ? (data.feePaidDate || '') : '';
   if (paidDate && (!/^\d{4}-\d{2}-\d{2}$/.test(paidDate) || !Number.isFinite(Date.parse(paidDate)) || paidDate > iso(today))) throw new Error('Дата оплаты должна быть корректной и не позже сегодняшнего дня.');

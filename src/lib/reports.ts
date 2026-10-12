@@ -33,7 +33,7 @@ export function reportDraft(c: Client) {
 export function buildReport(c: Client, data: ReportInput): Report {
   if (!reportStages.includes(data.stage)) throw new Error('Выберите этап отчёта.');
   if (!reportDateValid(data.from) || !reportDateValid(data.to) || data.from > data.to || data.to > iso(today)) throw new Error('Проверьте период: начало не позже окончания, окончание не позже сегодня.');
-  for (const [key, max, label] of [['done', 500, 'Итоги этапа'], ['next', 400, 'Следующий этап'], ['clientAction', 300, 'Что нужно от клиента']] as const) {
+  for (const [key, max, label] of [['done', 500, 'Итоги этапа'], ['next', 400, 'Следующий этап'], ['clientAction', 300, 'Что нужно от абитуриента']] as const) {
     const value = data[key];
     if (typeof value !== 'string' || !value.trim() || value.length > max) throw new Error(`${label}: заполните поле, не более ${max} символов.`);
   }
@@ -77,7 +77,7 @@ export function recordReportEvent(c: Client, reportId: string, kind: string, dat
   const minDate = kind === 'ack' ? report.sent!.date : reportCreatedDate(report);
   if (!reportDateValid(data.date) || data.date < minDate || data.date > iso(today)) throw new Error('Дата должна быть не раньше предыдущего действия и не позже сегодня.');
   if (!reportChannels.includes(data.channel)) throw new Error('Выберите канал.');
-  if (kind === 'ack' && !data.note?.trim()) throw new Error('Укажите, как клиент подтвердил ознакомление.');
+  if (kind === 'ack' && !data.note?.trim()) throw new Error('Укажите, как абитуриент подтвердил ознакомление.');
   const value = {date: data.date, channel: data.channel, note: (data.note || '').trim(), recordedAt: new Date().toISOString(), source: 'admin_manual'};
   report[kind] = value;
   return value;

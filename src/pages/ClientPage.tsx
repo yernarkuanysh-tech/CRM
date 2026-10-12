@@ -6,7 +6,7 @@ import {ApplicationForm} from '../forms/ApplicationForm';
 import {ClientForm} from '../forms/ClientForm';
 import {TaskForm} from '../forms/TaskForm';
 import {TestForm} from '../forms/TestForm';
-import {clientStatus, completed, feeLabels, feeTotals, initials, money, statuses, testScales} from '../lib/crm';
+import {clientStatus, completed, feeLabels, feeTotals, googleDriveUrl, initials, money, statuses, testScales} from '../lib/crm';
 import {fmt, fullDate} from '../lib/dates';
 import {deleteDocument, DOCUMENT_ACCEPT, downloadDocument, fileSize, listDocuments, uploadDocument} from '../lib/documents';
 import {errorMessage} from '../lib/api';
@@ -24,7 +24,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
   const modal = useModal();
   const c = clientById(id);
   if (!c) {
-    return <Shell><Empty><h1>Клиент не найден</h1><a href="#clients">Вернуться к списку</a></Empty></Shell>;
+    return <Shell><Empty><h1>Абитуриент не найден</h1><a href="#clients">Вернуться к списку</a></Empty></Shell>;
   }
   const tabs: [Tab, string, number | ''][] = [
     ['overview', 'Информация', ''],
@@ -36,11 +36,11 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
     ['notes', 'Заметки', ''],
   ];
   const tab: Tab = (tabNames as readonly string[]).includes(requestedTab) ? requestedTab as Tab : 'overview';
-  const editClient = () => modal.open('Редактировать клиента', <ClientForm client={c} />);
+  const editClient = () => modal.open('Редактировать абитуриента', <ClientForm client={c} />);
   const openWhatsApp = () => {
     if (!c.phone) {
       modal.open('Добавьте номер телефона', <>
-        <p>Чтобы открыть WhatsApp клиента, укажите его телефон в международном формате.</p>
+        <p>Чтобы открыть WhatsApp абитуриента, укажите его телефон в международном формате.</p>
         <div className="mt-23 flex justify-end gap-8"><button className="primary" onClick={editClient}>Добавить телефон</button></div>
       </>);
     } else {
@@ -59,7 +59,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
 
   return (
     <Shell>
-      <a className="mb-23 inline-flex items-center gap-7 text-[12px] text-muted" href="#clients"><Icon name="arrow" /> Все клиенты</a>
+      <a className="mb-23 inline-flex items-center gap-7 text-[12px] text-muted" href="#clients"><Icon name="arrow" /> Все абитуриенты</a>
       <Heading title={c.name} text={`${c.level} · поступление ${c.year}`} avatar={<Avatar className="size-54 text-[18px] max-md:hidden">{initials(c.name)}</Avatar>}>
         <BtnRow>
           <button className="max-md:p-10 max-md:text-[12px]" onClick={openWhatsApp}><Icon name="mail" /> WhatsApp</button>
@@ -68,7 +68,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
       </Heading>
       <div className={cx('grid gap-28', reportLayout ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[245px_minmax(0,1fr)] max-xl:grid-cols-[215px_1fr] max-md:grid-cols-[1fr]')}>
         <aside className={cx('h-fit p-20 max-md:hidden', card, reportLayout && 'hidden')}>
-          <h2 className="mb-24">О клиенте</h2>
+          <h2 className="mb-24">Об абитуриенте</h2>
           <dl>
             {profile.map(([label, value]) => (
               <div key={label} className="mb-22 last:mb-0">
@@ -78,7 +78,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
             ))}
           </dl>
           <div className="mt-18 flex items-center gap-25 border-t border-line pt-17 text-[12px] text-muted max-md:flex-wrap max-md:gap-12"><StatusBadge status={clientStatus(c)} /></div>
-          <p className={localNote}>{(c.demo ? 'Демонстрационный клиент. ' : '') + 'Данные сохраняются в базе.'}</p>
+          <p className={localNote}>{(c.demo ? 'Демонстрационный абитуриент. ' : '') + 'Данные сохраняются в базе.'}</p>
         </aside>
         <section>
           <nav className="mb-23 flex gap-8 overflow-auto border-b border-line pb-8 max-md:gap-4" aria-label="Разделы карточки">
@@ -109,7 +109,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
 function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): void; canDelete: boolean}) {
   const modal = useModal();
   const fields: [string, string | undefined][] = [
-    ['ФИО клиента', c.name],
+    ['ФИО абитуриента', c.name],
     ['Направление / поле', c.academicField],
     ['Целевые страны', c.country],
     ['Целевой семестр / год', `${c.semester && c.semester !== 'Не указан' ? c.semester + ' · ' : ''}${c.year}`],
@@ -124,7 +124,7 @@ function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): 
   const cell = 'm-0 px-16 py-14 text-[13px] leading-[1.6] wrap-anywhere';
   return (
     <>
-      <SectionTop><h2>Информация о клиенте</h2><button onClick={onEdit}>Изменить данные</button></SectionTop>
+      <SectionTop><h2>Информация об абитуриенте</h2><button onClick={onEdit}>Изменить данные</button></SectionTop>
       <dl className={cx('mx-0 mt-0 mb-24 overflow-hidden', card)}>
         {[...fields, ['Целевые университеты', null] as const].map(([label, value]) => (
           <div key={label} className={row}>
@@ -134,6 +134,14 @@ function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): 
             </dd>
           </div>
         ))}
+        <div className={row}>
+          <dt className={cx(cell, 'bg-white text-muted max-sm:pb-6')}>Папка Google Drive</dt>
+          <dd className={cx(cell, 'font-medium max-sm:pt-8')}>
+            {googleDriveUrl(c.googleDriveUrl)
+              ? <a className="text-link" href={googleDriveUrl(c.googleDriveUrl)} target="_blank" rel="noopener noreferrer">Открыть папку</a>
+              : <button className="border-0 p-0 text-link shadow-none hover:bg-transparent" onClick={onEdit}>Добавить ссылку</button>}
+          </dd>
+        </div>
       </dl>
       <FeeSummary client={c} />
       <TestsSection client={c} />
@@ -198,7 +206,7 @@ function FeeSummary({client}: {client: Client}) {
   return (
     <div className={cx('mb-22 p-18', card)}>
       <div>
-        <h3>Расходы клиента · application fee</h3>
+        <h3>Расходы абитуриента · application fee</h3>
         <p className="mt-5 mb-14 text-[12px] leading-[1.6] text-muted">Только отмеченные как оплаченные. Валюты считаются отдельно.</p>
       </div>
       <div className="flex flex-wrap gap-12">
@@ -285,7 +293,7 @@ function TasksTab({client: c}: {client: Client}) {
   const modal = useModal();
   return (
     <>
-      <SectionTop><h2>Задачи клиента</h2><button onClick={() => modal.open('Новая задача', <TaskForm client={c} />)}><Icon name="plus" /> Задача</button></SectionTop>
+      <SectionTop><h2>Задачи абитуриента</h2><button onClick={() => modal.open('Новая задача', <TaskForm client={c} />)}><Icon name="plus" /> Задача</button></SectionTop>
       {c.tasks.map(t => <TaskRow key={t.id} task={t} client={c} />)}
       {!c.tasks.length && <Empty>Задач пока нет. Добавьте следующий шаг по поступлению.</Empty>}
     </>
@@ -335,7 +343,7 @@ function DocumentsTab({client: c}: {client: Client}) {
   return (
     <>
       <SectionTop>
-        <div><h2>Документы клиента</h2><p className={subtle}>PDF, сканы, фото, Word и Excel · до 20 МБ</p></div>
+        <div><h2>Документы абитуриента</h2><p className={subtle}>PDF, сканы, фото, Word и Excel · до 20 МБ</p></div>
         <button disabled={busy} onClick={() => input.current?.click()}><Icon name="plus" /> {busy ? 'Загрузка…' : 'Загрузить'}</button>
         <input ref={input} type="file" multiple hidden accept={DOCUMENT_ACCEPT} onChange={onUpload} />
       </SectionTop>
@@ -377,7 +385,7 @@ function NotesTab({client: c}: {client: Client}) {
       <SectionTop><h2>Внутренние заметки</h2><span className={subtle}>Только для администратора</span></SectionTop>
       <form id="notes-form" onSubmit={onSubmit}>
         <label htmlFor="notes">Договорённости, предпочтения и следующий шаг</label>
-        <textarea id="notes" name="notes" className="min-h-180 w-full resize-y" maxLength={20000} placeholder="Что важно знать о клиенте…" defaultValue={c.notes} />
+        <textarea id="notes" name="notes" className="min-h-180 w-full resize-y" maxLength={20000} placeholder="Что важно знать об абитуриенте…" defaultValue={c.notes} />
         <div className="mt-23 flex justify-end gap-8"><button className="primary" type="submit">Сохранить заметку</button></div>
       </form>
     </>

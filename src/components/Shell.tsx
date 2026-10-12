@@ -9,14 +9,14 @@ import {Avatar, BrandLogo, cx, Icon, quietLink, type IconName} from './ui';
 
 export type Section = 'clients' | 'tasks' | 'integrations' | 'settings';
 
-const pageNames: Record<Section, string> = {clients: 'Клиенты', tasks: 'Задачи', settings: 'Настройки', integrations: 'Интеграции'};
+const pageNames: Record<Section, string> = {clients: 'Абитуриенты', tasks: 'Задачи', settings: 'Настройки', integrations: 'Интеграции'};
 
 export function Shell({active = 'clients', children}: {active?: Section; children: ReactNode}) {
   const {user, settings, clients, signOut} = useCrm();
   const toast = useToast();
   const owner = user.role === 'owner';
   const navigation: [Section, IconName, string, number | ''][] = [
-    ['clients', 'people', 'Клиенты', clients.length],
+    ['clients', 'people', 'Абитуриенты', clients.length],
     ['tasks', 'calendar', 'Задачи', allTasks(clients).filter(task => !task.done && isDueSoon(task.date)).length],
     ['integrations', 'link', 'Интеграции', ''],
     ['settings', 'grid', 'Настройки', ''],
@@ -102,7 +102,7 @@ function ImportConfirm({count}: {count: number}) {
   const modal = useModal(), toast = useToast();
   async function confirm() {
     try {
-      if (clients.length) throw Error('База уже содержит клиентов.');
+      if (clients.length) throw Error('База уже содержит абитуриентов.');
       if (await save(JSON.parse(localStorage.getItem(PROTOTYPE_KEY) || '[]') as Client[])) {
         modal.close();
         toast('Карточки перенесены в базу');

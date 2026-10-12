@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {feeTotals, validateFee} from '../../src/lib/crm';
+import {feeTotals, googleDriveUrl, validateFee} from '../../src/lib/crm';
 import {iso, today} from '../../src/lib/dates';
 import {buildReport, recordReportEvent, reportStages, reportStatus} from '../../src/lib/reports';
 import type {Application, Client} from '../../src/types';
@@ -26,6 +26,15 @@ describe('application fees', () => {
   it('normalises waived and unknown fees', () => {
     expect(validateFee({feeStatus: 'waived', feeAmount: '90', feeCurrency: 'USD'}).feeAmount).toBe(0);
     expect(validateFee({feeStatus: 'unknown', feeAmount: '', feeCurrency: 'USD'}).feeAmount).toBe(null);
+  });
+});
+
+describe('Google Drive links', () => {
+  it('accepts Google Drive and Docs HTTPS links only', () => {
+    expect(googleDriveUrl('https://drive.google.com/drive/folders/example')).toBe('https://drive.google.com/drive/folders/example');
+    expect(googleDriveUrl('https://docs.google.com/document/d/example')).toBe('https://docs.google.com/document/d/example');
+    expect(googleDriveUrl('javascript:alert(1)')).toBe('');
+    expect(googleDriveUrl('https://example.com/drive/folders/example')).toBe('');
   });
 });
 

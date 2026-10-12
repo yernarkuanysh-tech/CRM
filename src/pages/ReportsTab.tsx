@@ -23,10 +23,10 @@ export function ReportsTab({client: c}: {client: Client}) {
   return (
     <>
       <SectionTop>
-        <div><h2>Отчёты для клиента</h2><p className={subtle}>По завершении этапа · 1 страница A4</p></div>
+        <div><h2>Отчёты для абитуриента</h2><p className={subtle}>По завершении этапа · 1 страница A4</p></div>
         <button className="primary" onClick={() => modal.open('Отчёт по завершении этапа', <ReportForm client={c} />)}><Icon name="plus" /> Создать отчёт</button>
       </SectionTop>
-      <Notice>Сформируйте PDF и отправьте клиенту удобным способом. Отправка и ознакомление отмечаются вручную после фактического действия; автоматической рассылки нет.</Notice>
+      <Notice>Сформируйте PDF и отправьте абитуриенту удобным способом. Отправка и ознакомление отмечаются вручную после фактического действия; автоматической рассылки нет.</Notice>
       {r ? (
         <>
           <div className="mb-12 flex gap-8 overflow-x-auto pb-16">
@@ -101,7 +101,7 @@ function ReportDetail({client: c, report: r}: {client: Client; report: Report}) 
       link.href = url;
       link.download = name;
       link.click();
-      toast('PDF сформирован. Отправку клиенту отметьте отдельно.');
+      toast('PDF сформирован. Отправку абитуриенту отметьте отдельно.');
     } catch (error) {
       setFitError(errorMessage(error));
     } finally {
@@ -121,7 +121,7 @@ function ReportDetail({client: c, report: r}: {client: Client; report: Report}) 
         </BtnRow>
       </div>
       {r.sent && <p className={subtle}>{`Отправка: ${fullDate(r.sent.date)} · ${r.sent.channel} · отмечено администратором.`}</p>}
-      {r.ack && <p className={subtle}>{`Ознакомление: ${fullDate(r.ack.date)} · ${r.ack.channel} · ${r.ack.note}. Внесено администратором по ответу клиента.`}</p>}
+      {r.ack && <p className={subtle}>{`Ознакомление: ${fullDate(r.ack.date)} · ${r.ack.channel} · ${r.ack.note}. Внесено администратором по ответу абитуриента.`}</p>}
       <p id="report-download" className={subtle} role="status">{download && <a href={download.url} download={download.name}>PDF готов — скачать файл</a>}</p>
       <p id="report-fit-error" className={errorText} role="alert">{fitError}</p>
       <div className="overflow-auto rounded-[8px] border border-line bg-tint p-20">
@@ -171,7 +171,7 @@ export function ReportPaper({report: r, ref}: {report: Report; ref?: Ref<HTMLEle
           {r.appCount > r.applications.length && <p className="report-caption">{`Показано ${r.applications.length} из ${r.appCount} заявок. Общая сводка и расходы учитывают все заявки.`}</p>}
         </section>
         <section className="report-section report-fees">
-          <h2>03 / Расходы клиента на application fee</h2>
+          <h2>03 / Расходы абитуриента на application fee</h2>
           <p><b>За период:</b>{' ' + periodFees}<br /><b>Всего на дату отчёта:</b>{' ' + allFees}</p>
           {r.undatedPaid > 0 && <p className="report-caption">{`${r.undatedPaid} оплат без даты учтены только в общем итоге.`}</p>}
         </section>

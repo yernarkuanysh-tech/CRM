@@ -98,7 +98,7 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
 
   const updateClient = useCallback(async (id: string, recipe: (draft: Client) => void) => {
     const current = clientsRef.current, index = current.findIndex(c => c.id === id);
-    if (index < 0) throw Error('Клиент не найден.');
+    if (index < 0) throw Error('Абитуриент не найден.');
     const draft = structuredClone(current[index]);
     recipe(draft);
     return save(current.map((c, i) => i === index ? draft : c));
@@ -108,7 +108,7 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
     if (savingRef.current) throw Error('Дождитесь завершения сохранения.');
     const client = clientsRef.current.find(c => c.id === id);
     const revision = revisions.current[id];
-    if (!client || !revision) throw Error('Клиент не найден. Обновите страницу.');
+    if (!client || !revision) throw Error('Абитуриент не найден. Обновите страницу.');
 
     savingRef.current = true;
     setSaving(true);
@@ -142,8 +142,8 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
     try {
       Promise.resolve(modelContext.registerTool({
         name: 'search_applicants',
-        title: 'Поиск клиентов CRM',
-        description: 'Найти клиентов по имени или email в демонстрационной CRM. Только чтение.',
+        title: 'Поиск абитуриентов CRM',
+        description: 'Найти абитуриентов по имени или email в демонстрационной CRM. Только чтение.',
         inputSchema: {type: 'object', properties: {query: {type: 'string'}}, required: ['query'], additionalProperties: false},
         annotations: {readOnlyHint: true, untrustedContentHint: true},
         execute(input: {query?: unknown}) {

@@ -14,14 +14,14 @@ export function ClientsPage() {
   const deadlines = allTasks(clients).filter(t => !t.done).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
   return (
     <Shell active="clients">
-      <Heading title="Клиенты" text="Все поступления — в одном рабочем пространстве.">
-        <button className="primary" onClick={() => modal.open('Новый клиент', <ClientForm />)}><Icon name="plus" /> Добавить клиента</button>
+      <Heading title="Абитуриенты" text="Все поступления — в одном рабочем пространстве.">
+        <button className="primary" onClick={() => modal.open('Новый абитуриент', <ClientForm />)}><Icon name="plus" /> Добавить абитуриента</button>
       </Heading>
       <Stats />
       <div className="grid grid-cols-[minmax(0,1fr)_270px] gap-32 max-xl:grid-cols-[1fr]">
         <section>
           <SectionTop>
-            <h2>База клиентов <span className={cx(subtle, 'ml-6')}>{clients.length}</span></h2>
+            <h2>База абитуриентов <span className={cx(subtle, 'ml-6')}>{clients.length}</span></h2>
             <span className={subtle}>{`Набор ${settings.year}`}</span>
           </SectionTop>
           <ClientTable />
@@ -51,7 +51,7 @@ function Stats() {
   const {clients} = useCrm();
   const apps = clients.flatMap(c => c.apps);
   const stats: [string, number, string, IconName][] = [
-    ['Всего клиентов', clients.length, 'в текущем рабочем пространстве', 'people'],
+    ['Всего абитуриентов', clients.length, 'в текущем рабочем пространстве', 'people'],
     ['Заявок отправлено', apps.filter(isSent).length, `из ${apps.length} заявок`, 'file'],
     ['Получено офферов', apps.filter(a => a.status === 'Оффер').length, 'результаты по университетам', 'hat'],
     ['Задачи на 7 дней', allTasks(clients).filter(t => !t.done && isDueSoon(t.date)).length, 'включая просроченные', 'clock'],
@@ -87,19 +87,19 @@ function ClientTable() {
       <div className="mb-17 flex flex-wrap gap-9">
         <div className="relative min-w-190 flex-1">
           <Icon name="search" className="absolute top-11 left-11 text-muted" />
-          <input className="w-full pl-37" aria-label="Поиск клиентов" placeholder="Имя, почта или университет…" value={query} onChange={e => filter({query: e.target.value})} />
+          <input className="w-full pl-37" aria-label="Поиск абитуриентов" placeholder="Имя, почта или университет…" value={query} onChange={e => filter({query: e.target.value})} />
         </div>
         <select className="max-md:flex-1" aria-label="Уровень обучения" value={level} onChange={e => filter({level: e.target.value})}>
           <option value="">Все уровни</option>
           <Options items={levels} />
         </select>
-        <select className="max-md:flex-1" aria-label="Статус клиента" value={stage} onChange={e => filter({stage: e.target.value})}>
+        <select className="max-md:flex-1" aria-label="Статус абитуриента" value={stage} onChange={e => filter({stage: e.target.value})}>
           <option value="">Все статусы</option>
           <Options items={clientStages} />
         </select>
       </div>
       <TableWrap>
-        <thead><tr><th>Клиент</th><th>Обучение</th><th>Заявки</th><th>Статус</th><th>Дедлайн</th></tr></thead>
+        <thead><tr><th>Абитуриент</th><th>Обучение</th><th>Заявки</th><th>Статус</th><th>Дедлайн</th></tr></thead>
         <tbody>
           {rows.map((c, i) => {
             const sent = completed(c);
@@ -124,11 +124,11 @@ function ClientTable() {
               </tr>
             );
           })}
-          {!rows.length && <tr><td colSpan={5}><Empty>Клиенты не найдены. Попробуйте изменить поиск или фильтры.</Empty></td></tr>}
+          {!rows.length && <tr><td colSpan={5}><Empty>Абитуриенты не найдены. Попробуйте изменить поиск или фильтры.</Empty></td></tr>}
         </tbody>
       </TableWrap>
       <div className="flex items-center justify-between py-16 text-[12px] text-muted">
-        <span>{`${found.length ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, found.length)}` : '0'} из ${found.length} клиентов`}</span>
+        <span>{`${found.length ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, found.length)}` : '0'} из ${found.length} абитуриентов`}</span>
         <BtnRow>
           <button className="px-11 py-7" disabled={page === 1} aria-label="Предыдущая страница" onClick={() => setList({...list, page: page - 1})}>‹</button>
           <span>{`${page} / ${pages}`}</span>

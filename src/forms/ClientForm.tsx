@@ -1,6 +1,6 @@
 import {useModal, useToast} from '../components/feedback';
 import {FormFooter, Options} from '../components/ui';
-import {exams, levels, semesters} from '../lib/crm';
+import {exams, googleDriveUrl, levels, semesters} from '../lib/crm';
 import {navigate} from '../route';
 import {useCrm} from '../state';
 import type {Client, Level} from '../types';
@@ -11,9 +11,10 @@ export function ClientForm({client: c}: {client?: Client}) {
   const modal = useModal(), toast = useToast();
   const {error, onSubmit} = useFormAction(async form => {
     const data = trimmedValues(form), digits = data.phone.replace(/\D/g, '');
-    if (!data.name) throw Error('Укажите имя клиента.');
+    if (!data.name) throw Error('Укажите имя абитуриента.');
     if (data.phone && !/^\+?[\d\s()\-]+$/.test(data.phone)) throw Error('Используйте номер в международном формате, например +7 700 000 00 00.');
     if (data.phone && (digits.length < 10 || digits.length > 15)) throw Error('В номере должно быть от 10 до 15 цифр, включая код страны.');
+    if (data.googleDriveUrl && !googleDriveUrl(data.googleDriveUrl)) throw Error('Укажите ссылку на Google Drive, начинающуюся с https://drive.google.com/.');
     const values = {...data, name: data.name, level: data.level as Level, year: Number(data.year)};
     const existing = clients.find(x => x.id === c?.id);
     const target: Client = existing ? {...existing, ...values} : {id: crypto.randomUUID(), ...values, apps: [], tasks: [], notes: '', demo: false};
@@ -26,7 +27,7 @@ export function ClientForm({client: c}: {client?: Client}) {
 
   return (
     <form id="client-form" onSubmit={onSubmit}>
-      <label>ФИО клиента<input name="name" required maxLength={100} autoComplete="name" defaultValue={c?.name || ''} placeholder="Например, Амина Садыкова" /></label>
+      <label>ФИО абитуриента<input name="name" required maxLength={100} autoComplete="name" defaultValue={c?.name || ''} placeholder="Например, Амина Садыкова" /></label>
       <div className="row">
         <label>Уровень обучения<select name="level" defaultValue={c?.level || levels[0]}><Options items={levels} /></select></label>
         <label>Год поступления<input name="year" type="number" min={2020} max={2100} required defaultValue={c?.year || settings.year} /></label>
@@ -42,8 +43,9 @@ export function ClientForm({client: c}: {client?: Client}) {
       <label>Дата старта работы<input name="startDate" type="date" defaultValue={c?.startDate || ''} /></label>
       <label>Email<input name="email" type="email" autoComplete="email" defaultValue={c?.email || ''} placeholder="name@example.com" /></label>
       <label>Телефон для WhatsApp<input name="phone" type="tel" autoComplete="tel" defaultValue={c?.phone || ''} placeholder="+7 700 000 00 00" /></label>
+      <label>Папка Google Drive<input name="googleDriveUrl" type="url" maxLength={1000} defaultValue={c?.googleDriveUrl || ''} placeholder="https://drive.google.com/drive/folders/…" /></label>
       <label>Целевые страны<input name="country" maxLength={160} defaultValue={c?.country || ''} placeholder="Канада, Великобритания…" /></label>
-      <FormFooter label={c ? 'Сохранить изменения' : 'Добавить клиента'} error={error} onCancel={modal.close} />
+      <FormFooter label={c ? 'Сохранить изменения' : 'Добавить абитуриента'} error={error} onCancel={modal.close} />
     </form>
   );
 }

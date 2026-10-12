@@ -84,6 +84,7 @@ export interface Client {
   year: number;
   email?: string;
   phone?: string;
+  googleDriveUrl?: string;
   country?: string;
   academicField?: string;
   semester?: string;

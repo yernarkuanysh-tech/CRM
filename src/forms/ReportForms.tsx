@@ -27,7 +27,7 @@ export function ReportForm({client: c}: {client: Client}) {
       </div>
       <label>Итоги этапа · до 500 символов<textarea name="done" rows={4} required maxLength={500} placeholder="Какая работа выполнена и какого результата достигли…" /></label>
       <label>Следующий этап · до 400 символов<textarea name="next" rows={3} required maxLength={400} placeholder="Что будет сделано дальше и в какие сроки…" /></label>
-      <label>Что нужно от клиента · до 300 символов<textarea name="clientAction" rows={3} required maxLength={300} placeholder="Действия клиента и сроки, либо «Дополнительных действий не требуется»…" /></label>
+      <label>Что нужно от абитуриента · до 300 символов<textarea name="clientAction" rows={3} required maxLength={300} placeholder="Действия абитуриента и сроки, либо «Дополнительных действий не требуется»…" /></label>
       <fieldset className="rounded-[8px] border border-line bg-white p-14 shadow-card">
         <legend>Заявки в отчёте · до 8</legend>
         <p className={subtle}>Сводка и расходы учтут все заявки. Выберите те, которые важно показать подробно.</p>
@@ -55,10 +55,10 @@ export function ReportEventForm({client: c, report: r, kind}: {client: Client; r
   });
   return (
     <form id="report-event-form" onSubmit={onSubmit}>
-      <p>{kind === 'sent' ? 'Отметьте только уже отправленный клиенту отчёт. Эта кнопка не отправляет сообщения.' : 'Внесите подтверждение, которое вы уже получили от клиента. Открытие PDF само по себе не означает ознакомления.'}</p>
+      <p>{kind === 'sent' ? 'Отметьте только уже отправленный абитуриенту отчёт. Эта кнопка не отправляет сообщения.' : 'Внесите подтверждение, которое вы уже получили от абитуриента. Открытие PDF само по себе не означает ознакомления.'}</p>
       <label>Дата<input type="date" name="date" required min={kind === 'ack' ? r.sent?.date : reportCreatedDate(r)} max={iso(today)} defaultValue={iso(today)} /></label>
       <label>Канал<select name="channel"><Options items={reportChannels} /></select></label>
-      {kind === 'ack' && <label>Подтверждение клиента<textarea name="note" required maxLength={250} rows={3} placeholder="Например: ответил «Ознакомился, всё понятно» в WhatsApp" /></label>}
+      {kind === 'ack' && <label>Подтверждение абитуриента<textarea name="note" required maxLength={250} rows={3} placeholder="Например: ответил «Ознакомился, всё понятно» в WhatsApp" /></label>}
       <FormFooter label={kind === 'sent' ? 'Отправка состоялась' : 'Подтверждение получено'} error={error} onCancel={modal.close} />
     </form>
   );

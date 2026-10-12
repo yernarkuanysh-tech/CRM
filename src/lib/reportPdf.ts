@@ -103,7 +103,7 @@ export function renderReportCanvas<C extends CanvasLike = HTMLCanvasElement>(r: 
     }
   } else text('Подробные заявки не включены.', 9, false, '#636c79');
   if (r.appCount > r.applications.length) { y += 5; text(`Показано ${r.applications.length} из ${r.appCount} заявок. Сводка и расходы учитывают все заявки.`, 8, false, '#636c79'); }
-  section('03 / Расходы клиента на application fee', `За период: ${r.periodFees.map(amount).join(' + ') || 'нет оплат с датой в этом периоде'}\nВсего на дату отчёта: ${r.fees.map(amount).join(' + ') || 'оплаченные сборы не внесены'}`);
+  section('03 / Расходы абитуриента на application fee', `За период: ${r.periodFees.map(amount).join(' + ') || 'нет оплат с датой в этом периоде'}\nВсего на дату отчёта: ${r.fees.map(amount).join(' + ') || 'оплаченные сборы не внесены'}`);
   if (r.undatedPaid) { y += 3; text(`${r.undatedPaid} оплат без даты учтены только в общем итоге.`, 8, false, '#636c79'); }
   section('04 / Следующий этап', r.next);
   y += 14;
