@@ -3,7 +3,7 @@ import {useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
 import {Avatar, Badge, card, cx, Empty, errorText, Heading, Notice, PasswordField, Person, PersonSmall, quietLink, SectionTop, subtle, TableWrap} from '../components/ui';
 import {rawValues} from '../forms/common';
-import {check, downloadExport, errorMessage, rpc, supabase} from '../lib/api';
+import {check, downloadExport, errorMessage, FunctionUnavailableError, invokeFunction, rpc, supabase} from '../lib/api';
 import {initials} from '../lib/crm';
 import {useCrm} from '../state';
 import type {Settings, Team} from '../types';
@@ -161,6 +161,7 @@ function RecoverySection() {
 
 interface InviteResult {
   email: string;
+  token: string;
   inviteUrl: string;
   sent: boolean;
   warning?: string;
@@ -189,13 +190,19 @@ function TeamSection() {
   useEffect(() => { loadTeam(); }, [loadTeam]);
 
   const {status, busy, onSubmit} = useSettingsForm('Отправка…', async (data, form) => {
-    const created = await rpc<{email: string; token: string}>('create_invitation', {p_email: data.email, p_name: data.name});
-    // Email delivery is not wired up yet: the owner sends the link manually.
-    const result: InviteResult = {email: created.email, inviteUrl: `${location.origin}${location.pathname}#invite/${created.token}`, sent: false};
+    let delivered: InviteResult;
+    try {
+      delivered = await invokeFunction<InviteResult>('send-team-invite', {email: data.email, name: data.name});
+    } catch (error) {
+      if (!(error instanceof FunctionUnavailableError)) throw error;
+      const created = await rpc<{email: string; token: string}>('create_invitation', {p_email: data.email, p_name: data.name});
+      delivered = {...created, inviteUrl: '', sent: false, warning: 'Автоматическая отправка ещё не опубликована. Скопируйте ссылку сотруднику вручную.'};
+    }
+    const result = {...delivered, inviteUrl: delivered.inviteUrl || `${location.origin}${location.pathname}#invite/${delivered.token}`};
     form.reset();
     setInvite(result);
     await loadTeam();
-    return result.sent ? 'Приглашение отправлено на email.' : 'Приглашение создано, но автоматическая отправка ещё не настроена.';
+    return result.sent ? 'Приглашение отправлено на email.' : 'Приглашение создано. Отправьте ссылку сотруднику вручную.';
   });
 
   async function copy(url: string) {
@@ -218,7 +225,7 @@ function TeamSection() {
       </form>
       <div id="invite-result">
         {invite && (invite.sent ? (
-          <Notice><strong>Письмо отправлено</strong><p>{`${invite.email} получит одноразовую ссылку, действующую 7 дней.`}</p></Notice>
+          <Notice><strong>Письмо отправлено</strong><p>{`${invite.email} получит одноразовую ссылку, действующую 7 дней.`}</p>{invite.warning && <p className={errorText}>{invite.warning}</p>}</Notice>
         ) : (
           <Notice>
             <strong>Скопируйте ссылку сотруднику</strong>
@@ -277,7 +284,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
           {team.invitations.map(invite => (
             <tr key={invite.id}>
               <td><Person avatar={<Avatar>…</Avatar>}><strong>{invite.name}</strong><PersonSmall className={small}>{invite.email}</PersonSmall></Person></td>
-              <td><Badge tone="amber">Ожидает</Badge></td>
+              <td><Badge tone={invite.sentAt ? 'blue' : 'amber'}>{invite.sentAt ? 'Письмо отправлено' : 'Ссылка создана'}</Badge></td>
               <td>{`до ${formatInviteDate(invite.expires)}`}</td>
               <td className="text-right"><button disabled={busy === invite.id} onClick={() => act(invite.id, 'revoke_invitation', {p_id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
             </tr>

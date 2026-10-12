@@ -30,6 +30,26 @@ export async function rpc<T = unknown>(name: string, args?: Record<string, unkno
   return data as T;
 }
 
+/** Invokes an authenticated Edge Function and preserves its user-facing error body. */
+export class FunctionUnavailableError extends Error {}
+
+export async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  const {data, error} = await supabase.functions.invoke(name, {body});
+  if (error) {
+    const context = (error as {context?: unknown}).context;
+    if (context instanceof Response) {
+      if (context.status === 404) throw new FunctionUnavailableError('Функция отправки ещё не опубликована.');
+      let payload: {error?: unknown} | null = null;
+      try {
+        payload = await context.clone().json() as {error?: unknown};
+      } catch { /* Preserve the SDK error when the body is not JSON. */ }
+      if (typeof payload?.error === 'string') throw Error(errorMessage(payload.error));
+    }
+    throw Error(errorMessage(error));
+  }
+  return data as T;
+}
+
 /** Throws the Supabase error, translated, when a call failed. */
 export function check<T extends {error: unknown}>(result: T): T {
   if (result.error) throw Error(errorMessage(result.error));
