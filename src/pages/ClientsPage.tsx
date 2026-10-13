@@ -1,6 +1,6 @@
 import {useModal} from '../components/feedback';
 import {Shell} from '../components/Shell';
-import {Avatar, BtnRow, cx, Empty, Heading, Icon, localNote, Options, Person, PersonSmall, quietLink, SectionTop, StatusBadge, subtle, TableWrap, type IconName} from '../components/ui';
+import {Avatar, BtnRow, cx, Empty, Heading, Icon, localNote, Options, Person, PersonSmall, quietLink, SectionTop, StatusBadge, subtle, TableWrap, TagList, type IconName} from '../components/ui';
 import {ClientForm} from '../forms/ClientForm';
 import {allTasks, clientStages, clientStatus, completed, initials, isSent, levels} from '../lib/crm';
 import {days, fmt, isDueSoon} from '../lib/dates';
@@ -74,7 +74,7 @@ function ClientTable() {
   const {clients, list, setList} = useCrm();
   const {query, level, stage} = list;
   const found = clients.filter(c =>
-    (!query || `${c.name} ${c.email} ${c.apps.map(a => a.university).join(' ')}`.toLowerCase().includes(query.toLowerCase()))
+    (!query || `${c.name} ${c.email} ${(c.tags || []).join(' ')} ${c.apps.map(a => a.university).join(' ')}`.toLowerCase().includes(query.toLowerCase()))
     && (!level || c.level === level)
     && (!stage || clientStatus(c) === stage));
   const pages = Math.max(1, Math.ceil(found.length / PAGE_SIZE));
@@ -110,6 +110,7 @@ function ClientTable() {
                   <Person avatar={<Avatar tone={i}>{initials(c.name)}</Avatar>}>
                     <a className="text-[13px] font-medium text-ink hover:text-link" href={`#client/${c.id}`}>{c.name}</a>
                     <PersonSmall>{c.email || 'Почта не указана'}</PersonSmall>
+                    {!!c.tags?.length && <span className="mt-7 block"><TagList tags={c.tags} limit={2} /></span>}
                   </Person>
                 </td>
                 <td>{c.level}<br /><span className={subtle}>{c.year}</span></td>

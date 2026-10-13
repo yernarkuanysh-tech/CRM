@@ -70,6 +70,17 @@ export function Badge({tone = 'neutral', children}: {tone?: BadgeTone; children:
   return <span className={cx('inline-block rounded-full border px-7 py-5 text-[11px] tracking-[.01em]', badgeTones[tone])}>{children}</span>;
 }
 
+export function TagList({tags, limit}: {tags?: readonly string[]; limit?: number}) {
+  if (!tags?.length) return null;
+  const visible = limit ? tags.slice(0, limit) : tags;
+  return (
+    <span className="flex flex-wrap gap-5">
+      {visible.map(tag => <Badge key={tag} tone="blue">{tag}</Badge>)}
+      {limit && tags.length > limit && <Badge>{`+${tags.length - limit}`}</Badge>}
+    </span>
+  );
+}
+
 const statusTone = (s: AppStatus): BadgeTone => s === 'Оффер' ? 'green' : s === 'Подана' ? 'blue' : s === 'Интервью' || s === 'Документы' ? 'amber' : s === 'Отказ' ? 'red' : 'neutral';
 
 export const StatusBadge = ({status}: {status: AppStatus}) => <Badge tone={statusTone(status)}>{status}</Badge>;

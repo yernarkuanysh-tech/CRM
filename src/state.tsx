@@ -149,7 +149,7 @@ export function CrmProvider({session, onSignOut, children}: {session: Session; o
         execute(input: {query?: unknown}) {
           if (!input || typeof input.query !== 'string') throw new Error('query must be a string');
           const query = input.query.toLowerCase();
-          return clientsRef.current.filter(c => `${c.name} ${c.email}`.toLowerCase().includes(query)).slice(0, 20).map(c => ({id: c.id, name: c.name, level: c.level, applications: c.apps.length}));
+          return clientsRef.current.filter(c => `${c.name} ${c.email} ${(c.tags || []).join(' ')}`.toLowerCase().includes(query)).slice(0, 20).map(c => ({id: c.id, name: c.name, level: c.level, tags: c.tags || [], applications: c.apps.length}));
         },
       })).catch(() => {});
     } catch { /* registration is best-effort */ }

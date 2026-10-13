@@ -1,7 +1,7 @@
 import {useState, type FormEvent, type ReactNode} from 'react';
 import {useModal, useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
-import {Avatar, Badge, BtnRow, card, cx, Empty, EmptyTitle, Heading, Icon, localNote, Options, Person, SectionTop, StatusBadge, subtle, TableWrap} from '../components/ui';
+import {Avatar, Badge, BtnRow, card, cx, Empty, EmptyTitle, Heading, Icon, localNote, Options, Person, SectionTop, StatusBadge, subtle, TableWrap, TagList} from '../components/ui';
 import {ApplicationForm} from '../forms/ApplicationForm';
 import {ClientForm} from '../forms/ClientForm';
 import {TaskForm} from '../forms/TaskForm';
@@ -64,6 +64,7 @@ export function ClientPage({id, tab: requestedTab}: {id?: string; tab: string}) 
           <button className="max-md:p-10 max-md:text-[12px]" onClick={editClient}>Редактировать</button>
         </BtnRow>
       </Heading>
+      {!!c.tags?.length && <div className="-mt-20 mb-26 ml-69 max-md:ml-0"><TagList tags={c.tags} /></div>}
       <div className={cx('grid gap-28', reportLayout ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[245px_minmax(0,1fr)] max-xl:grid-cols-[215px_1fr] max-md:grid-cols-[1fr]')}>
         <aside className={cx('sticky top-92 h-fit p-20 max-md:hidden', card, reportLayout && 'hidden')}>
           <h2 className="mb-24">Об абитуриенте</h2>
@@ -107,6 +108,7 @@ function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): 
   const modal = useModal();
   const fields: [string, string | undefined][] = [
     ['ФИО абитуриента', c.name],
+    ['Теги', c.tags?.join(' · ')],
     ['Направление / поле', c.academicField],
     ['Целевые страны', c.country],
     ['Целевой семестр / год', `${c.semester && c.semester !== 'Не указан' ? c.semester + ' · ' : ''}${c.year}`],

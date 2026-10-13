@@ -9,6 +9,23 @@ export const feeLabels: Record<FeeStatus, string> = {unknown: 'Не указан
 export const semesters = ['Не указан', 'Fall', 'Spring', 'Summer', 'Winter'];
 export const exams = ['Не уточнено', 'Нет', 'GRE', 'GMAT', 'GRE или GMAT', 'GRE и GMAT'];
 export const PROTOTYPE_KEY = 'admissions-crm-demo-v1';
+export const tagSuggestions = ['Bolashak', 'Fully funded Master', 'Fully funded PhD', 'Scholarship', 'Self-funded'];
+
+export function normalizeClientTags(values: readonly string[]) {
+  const tags: string[] = [], seen = new Set<string>();
+  for (const value of values.flatMap(item => item.split(','))) {
+    const tag = value.trim().replace(/\s+/g, ' ');
+    if (!tag) continue;
+    if (tag.length > 40) throw Error('Каждый тег должен содержать не более 40 символов.');
+    const key = tag.toLocaleLowerCase('ru-RU');
+    if (!seen.has(key)) {
+      seen.add(key);
+      tags.push(tag);
+    }
+  }
+  if (tags.length > 20) throw Error('Можно добавить не более 20 тегов.');
+  return tags;
+}
 
 export const testScales: Record<TestType, {min: number; max: number; step: number; label: string}> = {
   'IELTS': {min: 0, max: 9, step: .5, label: 'IELTS · 0–9'},
