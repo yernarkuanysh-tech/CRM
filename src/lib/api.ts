@@ -1,4 +1,5 @@
 import {createClient} from '@supabase/supabase-js';
+import {classifyFunctionError} from './invitations';
 
 const url = import.meta.env.VITE_SUPABASE_URL, key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 if (!url || !key) throw Error('VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY не заданы (см. .env.example).');
@@ -31,14 +32,13 @@ export async function rpc<T = unknown>(name: string, args?: Record<string, unkno
 }
 
 /** Invokes an authenticated Edge Function and preserves its user-facing error body. */
-export class FunctionUnavailableError extends Error {}
-
 export async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
   const {data, error} = await supabase.functions.invoke(name, {body});
   if (error) {
     const context = (error as {context?: unknown}).context;
+    const classified = classifyFunctionError(error);
+    if (classified) throw classified;
     if (context instanceof Response) {
-      if (context.status === 404) throw new FunctionUnavailableError('Функция отправки ещё не опубликована.');
       let payload: {error?: unknown} | null = null;
       try {
         payload = await context.clone().json() as {error?: unknown};

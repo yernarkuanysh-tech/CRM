@@ -149,7 +149,7 @@ function OverviewTab({client: c, onEdit, canDelete}: {client: Client; onEdit(): 
           <SectionTop margin="mb-0">
             <div>
               <h2 className="text-danger">Удаление абитуриента</h2>
-              <p className="mt-6 mb-0 text-[12px] leading-[1.6] text-muted">Карточка, заявки, задачи, отчёты и документы будут удалены без возможности восстановления.</p>
+              <p className="mt-6 mb-0 text-[12px] leading-[1.6] text-muted">Карточка, заявки, задачи и отчёты будут удалены без возможности восстановления. Файлы в Google Drive сохранятся.</p>
             </div>
             <button className="border-[#e5484d] text-[#c62a2f] hover:bg-[#fff0ef]" onClick={() => modal.open('Удалить абитуриента', <DeleteClientForm client={c} />)}>Удалить</button>
           </SectionTop>
@@ -270,7 +270,7 @@ function ApplicationsTab({client: c}: {client: Client}) {
           <div className="flex flex-wrap items-center gap-24 text-[12px] text-muted max-md:gap-12">
             <span>{a.country}</span>
             <span><Icon name="calendar" />{` До ${fmt(a.deadline)}`}</span>
-            <select key={a.status} className="ml-auto p-7 text-[12px] max-md:ml-0" aria-label={`Статус заявки ${a.university}`} defaultValue={a.status} onChange={e => setStatus(a.id, e.target.value as AppStatus)}>
+            <select className="ml-auto p-7 text-[12px] max-md:ml-0" aria-label={`Статус заявки ${a.university}`} value={a.status} onChange={e => setStatus(a.id, e.target.value as AppStatus)}>
               <Options items={statuses} />
             </select>
           </div>
@@ -310,7 +310,7 @@ function NotesTab({client: c}: {client: Client}) {
   }
   return (
     <>
-      <SectionTop><h2>Внутренние заметки</h2><span className={subtle}>Только для администратора</span></SectionTop>
+      <SectionTop><h2>Внутренние заметки</h2><span className={subtle}>Для команды CRM</span></SectionTop>
       <form id="notes-form" onSubmit={onSubmit}>
         <label htmlFor="notes">Договорённости, предпочтения и следующий шаг</label>
         <textarea id="notes" name="notes" className="min-h-180 w-full resize-y" maxLength={20000} placeholder="Что важно знать об абитуриенте…" defaultValue={c.notes} />

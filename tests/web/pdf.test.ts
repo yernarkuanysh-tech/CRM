@@ -1,5 +1,5 @@
 // Renders a real A4 report through @napi-rs/canvas. Run with `npm run test:pdf`
-// after `npm install --no-save @napi-rs/canvas`.
+// Canvas is a pinned dev dependency, also installed in CI.
 import {mkdirSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {expect, it} from 'vitest';

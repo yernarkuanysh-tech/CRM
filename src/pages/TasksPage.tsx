@@ -12,8 +12,8 @@ export function TaskRow({task: t, client: c, showClient = false}: {task: Task; c
   const toggle = (done: boolean) => updateClient(c.id, draft => { draft.tasks.find(x => x.id === t.id)!.done = done; });
   return (
     <div className="flex items-start gap-12 border-b border-line py-17">
-      <input key={String(t.done)} className="mt-2 size-17 accent-ink" type="checkbox" id={`task-${t.id}`} defaultChecked={t.done} onChange={e => toggle(e.target.checked)} />
-      <label className="flex-1 cursor-pointer" htmlFor={`task-${t.id}`}>
+      <input className="mt-2 size-17 accent-ink" type="checkbox" id={`task-${c.id}-${t.id}`} checked={t.done} onChange={e => toggle(e.target.checked)} />
+      <label className="flex-1 cursor-pointer" htmlFor={`task-${c.id}-${t.id}`}>
         <strong className={cx('text-[13px] font-medium', t.done && 'text-muted line-through')}>{t.title}</strong>
         <span className="my-5 block text-[12px] text-muted">{`${showClient ? c.name + ' · ' : ''}${t.done ? 'Выполнено' : isOverdue(t.date) ? 'Просрочено' : isToday(t.date) ? 'Сегодня' : 'Срок'} · ${fmt(t.date)}`}</span>
       </label>
@@ -31,7 +31,7 @@ export function TasksPage() {
   return (
     <Shell active="tasks">
       <Heading title="Задачи" text={`${pending.length} открытых · ${pending.filter(t => isOverdue(t.date)).length} просроченных`}>
-        <button className="primary" onClick={() => modal.open('Новая задача', <TaskForm />)}><Icon name="plus" /> Добавить задачу</button>
+        <button className="primary" disabled={!clients.length} onClick={() => modal.open('Новая задача', <TaskForm />)}><Icon name="plus" /> Добавить задачу</button>
       </Heading>
       <div className="max-w-900">
         <SectionTop><h2>Предстоящие</h2><span className={subtle}>По сроку выполнения</span></SectionTop>

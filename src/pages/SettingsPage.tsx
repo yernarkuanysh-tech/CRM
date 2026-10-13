@@ -1,9 +1,10 @@
-import {useCallback, useEffect, useState, type FormEvent, type ReactNode} from 'react';
+import {useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode} from 'react';
 import {useToast} from '../components/feedback';
 import {Shell} from '../components/Shell';
 import {Avatar, Badge, card, cx, Empty, errorText, Heading, Icon, Notice, PasswordField, Person, PersonSmall, subtle, TableWrap, type IconName} from '../components/ui';
 import {rawValues} from '../forms/common';
-import {check, downloadExport, errorMessage, FunctionUnavailableError, invokeFunction, rpc, supabase} from '../lib/api';
+import {check, downloadExport, errorMessage, invokeFunction, rpc, supabase} from '../lib/api';
+import {newInvitationToken, sendInvitation, type InviteResult} from '../lib/invitations';
 import {initials} from '../lib/crm';
 import {useCrm} from '../state';
 import type {Settings, Team} from '../types';
@@ -16,8 +17,11 @@ const formatInviteDate = (value: string | number) => new Date(value).toLocaleDat
 function useSettingsForm(pending: string, action: (data: Record<string, string>, form: HTMLFormElement) => Promise<string | void>) {
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
+  const pendingRef = useRef(false);
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     const form = event.currentTarget;
     setBusy(true);
     setStatus(pending);
@@ -26,6 +30,7 @@ function useSettingsForm(pending: string, action: (data: Record<string, string>,
     } catch (error) {
       setStatus(errorMessage(error));
     } finally {
+      pendingRef.current = false;
       setBusy(false);
     }
   }
@@ -180,20 +185,15 @@ function RecoverySection() {
   );
 }
 
-interface InviteResult {
-  email: string;
-  token: string;
-  inviteUrl: string;
-  sent: boolean;
-  warning?: string;
-}
-
 function TeamSection() {
   const {setSettings} = useCrm();
   const toast = useToast();
   const [team, setTeam] = useState<Team | null>(null);
   const [loadError, setLoadError] = useState('');
   const [invite, setInvite] = useState<InviteResult | null>(null);
+  const attempt = useRef<{key: string; token: string} | null>(null);
+  const [resending, setResending] = useState(false);
+  const deliveryPending = useRef(false);
 
   const applyTeam = useCallback((next: Team) => {
     setTeam(next);
@@ -203,6 +203,7 @@ function TeamSection() {
   const loadTeam = useCallback(async () => {
     try {
       applyTeam(await rpc<Team>('team_overview'));
+      setLoadError('');
     } catch (error) {
       setLoadError(errorMessage(error));
     }
@@ -211,20 +212,45 @@ function TeamSection() {
   useEffect(() => { loadTeam(); }, [loadTeam]);
 
   const {status, busy, onSubmit} = useSettingsForm('Отправка…', async (data, form) => {
-    let delivered: InviteResult;
-    try {
-      delivered = await invokeFunction<InviteResult>('send-team-invite', {email: data.email, name: data.name});
-    } catch (error) {
-      if (!(error instanceof FunctionUnavailableError)) throw error;
-      const created = await rpc<{email: string; token: string}>('create_invitation', {p_email: data.email, p_name: data.name});
-      delivered = {...created, inviteUrl: '', sent: false, warning: 'Автоматическая отправка ещё не опубликована. Скопируйте ссылку сотруднику вручную.'};
-    }
-    const result = {...delivered, inviteUrl: delivered.inviteUrl || `${location.origin}${location.pathname}#invite/${delivered.token}`};
+    const result = await deliver(data.email, data.name);
     form.reset();
     setInvite(result);
     await loadTeam();
-    return result.sent ? 'Приглашение отправлено на email.' : 'Приглашение создано. Отправьте ссылку сотруднику вручную.';
+    return result.sent ? 'Письмо принято почтовым сервисом.' : 'Автоматическая отправка не подтверждена. Проверьте сообщение ниже; ссылку можно отправить вручную.';
   });
+
+  async function deliver(email: string, name: string) {
+    if (deliveryPending.current) throw Error('Дождитесь завершения отправки.');
+    deliveryPending.current = true;
+    try {
+      const key = `${email.trim().toLowerCase()}\n${name.trim()}`;
+      if (attempt.current?.key !== key) attempt.current = {key, token: newInvitationToken()};
+      setInvite(null);
+      const result = await sendInvitation({email, name, token: attempt.current!.token}, {
+        invoke: input => invokeFunction<InviteResult>('send-team-invite', input),
+        create: input => rpc<{email: string; token: string}>('create_invitation', {p_email: input.email, p_name: input.name, p_token: input.token}),
+        siteUrl: location.origin + location.pathname,
+      });
+      setInvite(result);
+      attempt.current = null;
+      return result;
+    } finally {
+      deliveryPending.current = false;
+      await loadTeam();
+    }
+  }
+
+  async function resend(email: string, name: string) {
+    setResending(true);
+    try {
+      const result = await deliver(email, name);
+      toast(result.sent ? 'Повторное письмо принято почтовым сервисом' : 'Автоотправка не подтверждена. Проверьте сообщение ниже.');
+    } catch (error) {
+      toast(errorMessage(error));
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function copy(url: string) {
     try {
@@ -237,15 +263,16 @@ function TeamSection() {
 
   return (
     <Section className="col-span-full" title="Команда" text="Приглашайте сотрудников и управляйте их доступом." icon="people">
+      <p className="mt-0 mb-16 text-[12px] text-muted">Повторная отправка создаёт новую ссылку и отменяет предыдущую.</p>
       <form className="mb-24 grid grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_auto] items-end gap-12 rounded-[16px] bg-[#f8f8fa] p-18 max-md:grid-cols-[1fr]" onSubmit={onSubmit}>
         <label className="m-0">Имя сотрудника<input name="name" required maxLength={100} placeholder="Имя и фамилия" /></label>
         <label className="m-0">Рабочая почта<input name="email" type="email" required maxLength={254} placeholder="name@company.kz" /></label>
-        <button className="primary h-42" disabled={busy}>Отправить приглашение</button>
+        <button className="primary h-42" disabled={busy || resending}>Отправить приглашение</button>
         <p className={cx(formStatus, 'col-span-full m-0 max-md:col-auto')} role="status">{status}</p>
       </form>
       <div id="invite-result">
         {invite && (invite.sent ? (
-          <Notice><strong>Письмо отправлено</strong><p>{`${invite.email} получит одноразовую ссылку, действующую 7 дней.`}</p>{invite.warning && <p className={errorText}>{invite.warning}</p>}</Notice>
+          <Notice><strong>Письмо принято почтовым сервисом</strong><p>{`Приглашение для ${invite.email}. Ссылка действует 7 дней; доставка письма подтверждается в Resend.`}</p>{invite.warning && <p className={errorText}>{invite.warning}</p>}</Notice>
         ) : (
           <Notice>
             <strong>Скопируйте ссылку сотруднику</strong>
@@ -256,16 +283,20 @@ function TeamSection() {
         ))}
       </div>
       <div id="team-list">
-        {loadError ? <p className={errorText}>{loadError}</p> : team ? <TeamTable team={team} onChange={applyTeam} /> : <p className={subtle}>Загрузка команды…</p>}
+        {loadError && <p className={errorText}>{loadError}</p>}
+        {team ? <TeamTable team={team} onChange={applyTeam} resend={resend} deliveryBusy={busy || resending} /> : <p className={subtle}>Загрузка команды…</p>}
       </div>
     </Section>
   );
 }
 
-function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
+function TeamTable({team, onChange, resend, deliveryBusy}: {team: Team; onChange(team: Team): void; resend(email: string, name: string): Promise<void>; deliveryBusy: boolean}) {
   const toast = useToast();
   const [busy, setBusy] = useState('');
+  const pendingRef = useRef(false);
   async function act(id: string, name: string, args: Record<string, unknown>, message: string) {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setBusy(id);
     try {
       onChange(await rpc<Team>(name, args));
@@ -273,6 +304,7 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
     } catch (error) {
       toast(errorMessage(error));
     } finally {
+      pendingRef.current = false;
       setBusy('');
     }
   }
@@ -305,9 +337,9 @@ function TeamTable({team, onChange}: {team: Team; onChange(team: Team): void}) {
           {team.invitations.map(invite => (
             <tr key={invite.id}>
               <td><Person avatar={<Avatar>…</Avatar>}><strong>{invite.name}</strong><PersonSmall className={small}>{invite.email}</PersonSmall></Person></td>
-              <td><Badge tone={invite.sentAt ? 'blue' : 'amber'}>{invite.sentAt ? 'Письмо отправлено' : 'Ссылка создана'}</Badge></td>
+              <td><Badge tone={invite.sentAt ? 'blue' : 'amber'}>{invite.sentAt ? 'Принято почтовым сервисом' : 'Ссылка создана'}</Badge></td>
               <td>{`до ${formatInviteDate(invite.expires)}`}</td>
-              <td className="text-right"><button disabled={busy === invite.id} onClick={() => act(invite.id, 'revoke_invitation', {p_id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
+              <td className="text-right"><button disabled={!!busy || deliveryBusy} onClick={() => resend(invite.email, invite.name)}>Отправить повторно</button>{' '}<button disabled={!!busy || deliveryBusy} onClick={() => act(invite.id, 'revoke_invitation', {p_id: invite.id}, 'Приглашение отозвано')}>Отозвать</button></td>
             </tr>
           ))}
           {!team.members.length && !team.invitations.length && <tr><td colSpan={4}><Empty>Пока нет сотрудников. Отправьте первое приглашение.</Empty></td></tr>}

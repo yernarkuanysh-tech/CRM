@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {feeTotals, googleDriveUrl, validateFee} from '../../src/lib/crm';
 import {iso, today} from '../../src/lib/dates';
 import {buildReport, recordReportEvent, reportStages, reportStatus} from '../../src/lib/reports';
@@ -21,6 +21,7 @@ describe('application fees', () => {
     for (const value of ['-1', '1.001', 'Infinity', 'abc']) expect(() => validateFee({feeStatus: 'paid', feeAmount: value, feeCurrency: 'USD'})).toThrow();
     expect(() => validateFee({feeStatus: 'paid', feeAmount: '', feeCurrency: 'USD'})).toThrow();
     expect(() => validateFee({feeStatus: 'paid', feeAmount: '90', feeCurrency: 'USD', feePaidDate: '2099-01-01'})).toThrow();
+    expect(() => validateFee({feeStatus: 'paid', feeAmount: '90', feeCurrency: 'USD', feePaidDate: '2026-02-31'})).toThrow();
   });
 
   it('normalises waived and unknown fees', () => {
@@ -85,8 +86,10 @@ describe('stage reports', () => {
 });
 
 describe('report paper', () => {
-  // Imports src/lib/api.ts, which needs Supabase env vars that CI doesn't have.
-  it.skipIf(process.env.CI)('renders escaped text and omits internal notes', async () => {
+  it('renders escaped text and omits internal notes', async () => {
+    // Import needs client configuration, but rendering never contacts a server.
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://qa.example.invalid');
+    vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'qa-public-test-key');
     const {renderToStaticMarkup} = await import('react-dom/server');
     const {createElement} = await import('react');
     const {ReportPaper} = await import('../../src/pages/ReportsTab');
@@ -96,5 +99,6 @@ describe('report paper', () => {
     const html = renderToStaticMarkup(createElement(ReportPaper, {report}));
     expect(html).not.toContain('PRIVATE INTERNAL NOTE');
     expect(html).toContain('&lt;script&gt;');
+    vi.unstubAllEnvs();
   });
 });

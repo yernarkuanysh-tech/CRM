@@ -5,6 +5,12 @@ tmp/
 .openai/
 data/
 .env
+.env.*
+!.env.example
+!.env.production
+!supabase/functions/.env.example
+supabase/.temp/
+supabase/.branches/
 .DS_Store
 *.log
 *.zip

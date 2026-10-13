@@ -82,7 +82,7 @@ export function validateFee(data: FeeInput) {
   if (status === 'paid' && amount === null) throw new Error('Укажите сумму, которую оплатил абитуриент.');
   if (status === 'waived') amount = 0;
   const paidDate = status === 'paid' ? (data.feePaidDate || '') : '';
-  if (paidDate && (!/^\d{4}-\d{2}-\d{2}$/.test(paidDate) || !Number.isFinite(Date.parse(paidDate)) || paidDate > iso(today))) throw new Error('Дата оплаты должна быть корректной и не позже сегодняшнего дня.');
+  if (paidDate && (!reportDateValid(paidDate) || paidDate > iso(today))) throw new Error('Дата оплаты должна быть корректной и не позже сегодняшнего дня.');
   return {feeAmount: amount, feeCurrency: currency as Currency, feeStatus: status as FeeStatus, feePaidDate: paidDate};
 }
 

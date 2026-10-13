@@ -49,14 +49,22 @@ export async function downloadDocument(doc: ClientDocument) {
 /** Deletes the record first: a leftover file is invisible, a record without a file is not. */
 export async function deleteDocument(doc: ClientDocument) {
   check(await supabase.from('client_documents').delete().eq('id', doc.id));
-  await supabase.storage.from(bucket).remove([path(doc)]);
+  check(await supabase.storage.from(bucket).remove([path(doc)]));
 }
 
 /** Removes the stored files of deleted clients (their records go with the client row). Best-effort. */
 export async function removeClientFiles(clientIds: string[]) {
   for (const clientId of clientIds) {
-    const {data, error} = await supabase.storage.from(bucket).list(clientId, {limit: 1000});
-    if (error) throw Error(errorMessage(error));
-    if (data?.length) check(await supabase.storage.from(bucket).remove(data.map(file => `${clientId}/${file.name}`)));
+    let previousPage = '';
+    // Read offset zero after removal, because remaining pages shift left.
+    while (true) {
+      const {data, error} = await supabase.storage.from(bucket).list(clientId, {limit: 1000});
+      if (error) throw Error(errorMessage(error));
+      if (!data?.length) break;
+      const page = data.map(file => file.name).sort().join('\n');
+      if (page === previousPage) throw Error('Не удалось очистить файлы абитуриента. Проверьте права доступа к Storage.');
+      previousPage = page;
+      check(await supabase.storage.from(bucket).remove(data.map(file => `${clientId}/${file.name}`)));
+    }
   }
 }

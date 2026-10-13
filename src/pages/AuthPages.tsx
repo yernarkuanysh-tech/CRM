@@ -1,7 +1,8 @@
-import {useEffect, useState, type FormEvent, type ReactNode} from 'react';
+import {useEffect, useState, type ReactNode} from 'react';
 import {useToast} from '../components/feedback';
 import {BrandLogo, PasswordField, subtle} from '../components/ui';
 import {check, errorMessage, rpc, supabase} from '../lib/api';
+import {useFormAction} from '../forms/common';
 
 const formValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as Record<string, string>;
 
@@ -27,20 +28,7 @@ const alertText = 'not-empty:my-10 not-empty:text-[12px]';
 
 /** Runs `action` on submit with the submit button disabled; returns the error message setter. */
 function useSubmit(action: (form: HTMLFormElement) => Promise<void>) {
-  const [error, setError] = useState('');
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget, button = form.querySelector('button')!;
-    button.disabled = true;
-    try {
-      await action(form);
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      button.disabled = false;
-    }
-  }
-  return {error, onSubmit};
+  return useFormAction(action);
 }
 
 export function LoginPage({initialized, onSignedIn, onRecover}: {initialized: boolean; onSignedIn(): void; onRecover(): void}) {
@@ -78,18 +66,36 @@ interface InviteInfo {
   email: string;
   name: string;
   organization: string;
+  existingAccount: boolean;
 }
 
 export function InvitePage({token, onSignedIn, onBack}: {token: string; onSignedIn(): void; onBack(): void}) {
   const [invite, setInvite] = useState<InviteInfo | null>(null);
   const [loadError, setLoadError] = useState('');
+  const [confirmationPending, setConfirmationPending] = useState(false);
   useEffect(() => {
-    rpc<InviteInfo>('inspect_invitation', {p_token: token}).then(setInvite, error => setLoadError(errorMessage(error)));
+    let cancelled = false;
+    setInvite(null);
+    setLoadError('');
+    rpc<InviteInfo>('inspect_invitation', {p_token: token}).then(value => { if (!cancelled) setInvite(value); }, error => { if (!cancelled) setLoadError(errorMessage(error)); });
+    return () => { cancelled = true; };
   }, [token]);
   const {error, onSubmit} = useSubmit(async form => {
     const data = formValues(form);
+    if (invite!.existingAccount) {
+      check(await supabase.auth.signInWithPassword({email: invite!.email, password: data.password}));
+      await rpc('accept_invitation', {p_token: token});
+      onSignedIn();
+      return;
+    }
     if (data.password !== data.confirmPassword) throw Error('Пароли не совпадают.');
-    await signUp(invite!.email, data.password, {name: data.name.trim(), invite_token: token});
+    const {data: created} = check(await supabase.auth.signUp({email: invite!.email, password: data.password, options: {
+      data: {name: data.name.trim(), invite_token: token}, emailRedirectTo: location.origin + location.pathname,
+    }}));
+    if (!created.session) {
+      setConfirmationPending(true);
+      return;
+    }
     onSignedIn();
   });
 
@@ -102,16 +108,17 @@ export function InvitePage({token, onSignedIn, onBack}: {token: string; onSigned
       </AuthCard>
     );
   }
-  if (!invite) return null;
+  if (confirmationPending) return <AuthCard><h1 className={title}>Подтвердите почту</h1><p className={lead}>Аккаунт создан. Откройте письмо подтверждения Supabase, затем войдите в CRM с новым паролем.</p><button onClick={onBack}>Перейти ко входу</button></AuthCard>;
+  if (!invite) return <AuthCard><p role="status">Проверяем приглашение…</p></AuthCard>;
   return (
     <AuthCard>
       <p className={`mx-0 mt-0 mb-12 font-mono text-[10px] font-[650] tracking-[.04em] uppercase ${lead}`}>Приглашение в команду</p>
       <h1 className={title}>{`Присоединиться к ${invite.organization}`}</h1>
-      <p className={lead}>Приглашение отправлено на <strong className="font-semibold">{invite.email}</strong>. Создайте личный пароль для входа.</p>
+      <p className={lead}>Приглашение для <strong className="font-semibold">{invite.email}</strong>. {invite.existingAccount ? 'Войдите с паролем существующего аккаунта.' : 'Создайте личный пароль для входа.'}</p>
       <form id="invite-form" onSubmit={onSubmit}>
-        <label>Ваше имя<input name="name" required maxLength={100} defaultValue={invite.name} autoComplete="name" /></label>
-        <label>Новый пароль<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
-        <label>Повторите пароль<input name="confirmPassword" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
+        {!invite.existingAccount && <label>Ваше имя<input name="name" required maxLength={100} defaultValue={invite.name} autoComplete="name" /></label>}
+        <label>{invite.existingAccount ? 'Пароль аккаунта' : 'Новый пароль'}<input name="password" type="password" required minLength={invite.existingAccount ? 1 : 12} maxLength={256} autoComplete={invite.existingAccount ? 'current-password' : 'new-password'} /></label>
+        {!invite.existingAccount && <label>Повторите пароль<input name="confirmPassword" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>}
         <p id="invite-error" className={`text-danger ${alertText}`} role="alert">{error}</p>
         <button className="primary">Принять приглашение</button>
       </form>

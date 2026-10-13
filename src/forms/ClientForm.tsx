@@ -1,4 +1,4 @@
-import {useState, type KeyboardEvent} from 'react';
+import {useState, type Dispatch, type KeyboardEvent, type SetStateAction} from 'react';
 import {useModal, useToast} from '../components/feedback';
 import {FormFooter, Options, cx} from '../components/ui';
 import {exams, googleDriveUrl, levels, normalizeClientTags, semesters, tagSuggestions} from '../lib/crm';
@@ -54,14 +54,19 @@ export function ClientForm({client: c}: {client?: Client}) {
   );
 }
 
-function TagEditor({tags, setTags, draft, setDraft}: {tags: string[]; setTags(value: string[]): void; draft: string; setDraft(value: string): void}) {
+function TagEditor({tags, setTags, draft, setDraft}: {tags: string[]; setTags: Dispatch<SetStateAction<string[]>>; draft: string; setDraft(value: string): void}) {
+  const [tagError, setTagError] = useState('');
   const add = (value = draft) => {
     if (!value.trim() || tags.length >= 20) return;
-    const next = normalizeClientTags([...tags, value]);
-    setTags(next);
-    setDraft('');
+    try {
+      const additions = normalizeClientTags([draft, value]);
+      normalizeClientTags([...tags, ...additions]);
+      setTags(current => normalizeClientTags([...current, ...additions]));
+      setDraft('');
+      setTagError('');
+    } catch (error) { setTagError(error instanceof Error ? error.message : 'Проверьте теги.'); }
   };
-  const remove = (tag: string) => setTags(tags.filter(value => value !== tag));
+  const remove = (tag: string) => { setTags(current => current.filter(value => value !== tag)); setTagError(''); };
   const available = tagSuggestions.filter(suggestion => !tags.some(tag => tag.toLocaleLowerCase('ru-RU') === suggestion.toLocaleLowerCase('ru-RU')));
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' || event.key === ',') {
@@ -80,9 +85,10 @@ function TagEditor({tags, setTags, draft, setDraft}: {tags: string[]; setTags(va
             {tag}<span className="ml-6 text-[14px]" aria-hidden="true">×</span>
           </button>
         ))}
-        <input className="min-h-32 min-w-150 flex-1 border-0 bg-transparent px-6 py-4 shadow-none focus:shadow-none" value={draft} maxLength={40} disabled={tags.length >= 20} onChange={event => setDraft(event.target.value.replace(',', ''))} onKeyDown={onKeyDown} onBlur={() => draft.trim() && add()} placeholder={tags.length >= 20 ? 'Достигнут лимит тегов' : tags.length ? 'Добавить ещё…' : 'Например, Bolashak'} aria-label="Новый тег" />
+        <input className="min-h-32 min-w-150 flex-1 border-0 bg-transparent px-6 py-4 shadow-none focus:shadow-none" value={draft} maxLength={1000} disabled={tags.length >= 20} onChange={event => { setDraft(event.target.value); setTagError(''); }} onKeyDown={onKeyDown} onBlur={() => draft.trim() && add()} placeholder={tags.length >= 20 ? 'Достигнут лимит тегов' : tags.length ? 'Добавить ещё…' : 'Например, Bolashak'} aria-label="Новый тег" />
       </div>
       <p className="mt-7 mb-8 text-[11px] leading-[1.5] text-muted">Введите тег и нажмите Enter или запятую. До 20 тегов.</p>
+      {tagError && <p className="text-[12px] text-danger" role="alert">{tagError}</p>}
       {!!available.length && tags.length < 20 && <div className="flex flex-wrap items-center gap-6" aria-label="Предлагаемые теги"><span className="mr-2 text-[11px] text-muted">Добавить:</span>{available.slice(0, 4).map(tag => <button key={tag} type="button" className="min-h-28 rounded-full border-line bg-white px-9 py-4 text-[11px] text-ink-soft shadow-none" onClick={() => add(tag)}>{tag}</button>)}</div>}
     </fieldset>
   );
